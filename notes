@@ -1,0 +1,6 @@
+    rv = self.ensure_sync(before_func)()
+  File "/home/albin/Python/Flask/prj03/app/main/views.py", line 140, in isAdmin
+    if ACCESS['admin'] == g.currentUserRole:
+NameError: name 'ACCESS' is not defined
+127.0.0.1 - - [21/Jan/2022 18:44:22] "GET / HTTP/1.1" 500 -
+
