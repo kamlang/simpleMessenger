@@ -1,0 +1,14 @@
+{% extends "parent.html" %} {% block contents %}
+<div id="form-center">
+<div class="w3-container w3-sand  w3-margin w3-padding w3-round-xlarge">
+    <form method="post" action="">
+        <p><label align="right">Username:</label>{{ form.username }}</p>
+        <p><label>Email:</label>{{ form.email }}</p>
+        <p><label>Password:</label>{{ form.password }}</p>
+        <p><label>Please confirm password:</label>{{ form.confirm}}</p>
+        <p>{{ form.submit}}</p>
+        {{ form.csrf_token }}
+    </form>
+</div>
+</div>
+{% endblock %}    

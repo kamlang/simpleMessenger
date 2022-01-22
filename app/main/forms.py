@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
-from ..models import getRolesList
 from wtforms import *
+
 
 class loginForm(FlaskForm):
     username=StringField('username', [validators.InputRequired("This field can not be empty")])
@@ -15,7 +15,6 @@ class registerForm(FlaskForm):
     confirm  = PasswordField('Repeat Password')
     submit = SubmitField("Submit")
 
-
 class editUserForm(FlaskForm):
-    role= SelectField(u'Role', choices=getRolesList())
+    role= SelectField(u'Role')
     submit = SubmitField("Submit")

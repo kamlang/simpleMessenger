@@ -1,0 +1,31 @@
+ {% extends "parent.html" %} {% block contents %}
+<caption align="top">
+    <h2>List of Users</h2>
+</caption>
+<div class="w3-responsive w3-margin">
+		 <table id="form-center" class="w3-table-all w3-centered w3-round-xlarge">
+    <thead>
+        <tr class="w3-blue">
+            <th>Id</th>
+            <th>Username</th>
+            <th>Password</th>
+            <th>Role</th>
+            <th>Email</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in users %}
+        <tr>
+            <td>{{ user.id }}</td>
+            <td>{{ user.username }}</td>
+            <td>{{ user.password }}</td>
+	    <td>{% for role in user.roles %} {{ role.name }} {% endfor %}</td>
+            <td>{{ user.email}}</td>
+            <td><a href="{{ url_for('.delete', username=user.username) }}">Delete</a> <a href="{{ url_for('.edit', username=user.username) }}">Edit</a> </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endblock %}

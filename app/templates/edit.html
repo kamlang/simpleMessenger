@@ -1,0 +1,12 @@
+{% extends "parent.html" %} {% block contents %}
+<p> Changing "{{ user }}" role</p>
+<div id="form-center">
+<div class="w3-container w3-sand  w3-margin w3-padding w3-round-xlarge">
+    <form method="post" action="">
+        <p><label>Role:</label>{{ form.role}}</p>
+        <p>{{ form.submit}}</p>
+        {{ form.csrf_token }}
+    </form>
+</div>
+</div>
+{% endblock %}    

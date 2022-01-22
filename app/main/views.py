@@ -1,15 +1,24 @@
+from flask import Flask, request, flash, url_for, redirect, render_template, current_app, session, g, abort
+import logging
+from flask_login import login_user, current_user, logout_user,login_required
+from functools import wraps
 from . import main
-from .forms import registerForm,loginForm
+from .forms import registerForm,loginForm, editUserForm
 from .. import db
 from .. import login_manager
-from ..models import User
-from flask import Flask, request, flash, url_for, redirect, render_template, current_app, session, g, abort
+from ..models import User,Role
 from ..email import sendEmailToAdmin
-from flask_login import login_user, current_user, logout_user,login_required
-import logging
 
 errorMessage="An error happened!"
 successMessage="Operation succeed !"
+
+def admin_required(viewFunc):
+    @wraps(viewFunc)
+    def isadmin(username):
+        if g.userIsAdmin:
+            return viewFunc(username)
+        abort(403)
+    return isadmin
 
 @main.route('/')
 def home():
@@ -27,6 +36,7 @@ def register():
                 flash("username already exist.")
                 return redirect('/register')
             user = User(username=username,password=password,email=email)
+            user.roles = Role.query.filter_by(name='User')
             db.session.add(user)
             try:
                 db.session.commit()
@@ -93,16 +103,16 @@ def usernameExist(username):
 
 @main.route('/edit/<username>',methods=['GET', 'POST']) ###Admin
 @login_required
+@admin_required
 def edit(username):
-    if not g.userIsAdmin:
-        abort(403)
     form=editUserForm()
+    form.role.choices=getRolesList()
     if form.validate() == True:
         role=request.form['role']
         user=User.query.filter_by(username=username).first()
-        logging.debug(user.id)
+        role=Role.query.filter_by(name=role).first()
         if user is not None:
-            user.role = role
+            user.roles = [role]
             try:
                 db.session.commit()
                 flash(successMessage)
@@ -115,9 +125,8 @@ def edit(username):
 
 @main.route("/delete/<username>") ###Admin
 @login_required
+@admin_required
 def delete(username):
-    if not g.userIsAdmin:
-        abort(403)
     q = User.query.filter_by(username=username).first()
     if q is not None:
         try:
@@ -131,13 +140,20 @@ def delete(username):
     return redirect('/showall')
 
 @main.before_request
-def isAdmin():
-    if not current_user.is_authenticated:
-        g.currentUserRole = 0
-    else:
-        q=User.query.filter_by(username=current_user.username).first()
-        g.currentUserRole = q.role
-    if ACCESS['admin'] == g.currentUserRole:
-        g.userIsAdmin = True
-    else:
+def getUserRoles():
+    if current_user.is_authenticated:
         g.userIsAdmin = False
+        u=User.query.filter_by(username=current_user.username).first()
+        userRoles = u.roles
+        for userRole in userRoles:
+            if userRole.name == 'Admin':
+                g.userIsAdmin = True
+
+
+def getRolesList():
+    rolesList=[]
+    q=Role.query.all()
+    for role in q:
+        rolesList.append(role.name)
+    return rolesList
+
