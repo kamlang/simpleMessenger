@@ -1,0 +1,16 @@
+{% extends "parent.html" %} {% block contents %}
+<div id="form-center">
+	<div class="w3-container w3-left w3-blue w3-padding w3-round-large" style="margin:-10px;">{{ form_name }}</div>
+<div class="w3-container w3-sand  w3-margin w3-padding w3-round-xlarge">
+    <form method="post" action="">
+	{% for field in form %}
+	{% if not field == form.csrf_token %}
+	<p>{{ field.label}}  {{ field }}</p>
+	{% if field.errors %}{{ field.errors }}{% endif %}
+	{% endif %}
+	{% endfor %}
+        {{ form.csrf_token }}
+    </form>
+</div>
+</div>
+{% endblock %}    

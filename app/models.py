@@ -33,7 +33,7 @@ class User(db.Model,UserMixin):
         return check_password_hash(self.password_hash, password)
     @property
     def role(self):
-        pass
+        ass
     @role.setter
     def role(self, role):
         try:

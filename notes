@@ -31,7 +31,11 @@ And create article then allow user to comment.
 
 newsletter functionallity
 
+add remember me functionallity
+see error raised by wtfroms
 
---> implement idadmin
-change db
-read on property setter getter sqlalchemy, try to remove init_class page 111
+Things to implement:
+
+description me, small cv, readings.
+validating password with regex.
+display form warning nicely
