@@ -40,8 +40,8 @@ def register():
             if usernameExist(username):
                 flash("username already exist.")
                 return redirect('/register')
-            user = User(username=username,password=password,email=email)
-            user.roles = [Role.query.filter_by(name='User').first()]
+            user = User(username=username,password=password,email=email,role='User')
+#            user.roles = [Role.query.filter_by(name='User').first()]
             db.session.add(user)
             try:
                 db.session.commit()

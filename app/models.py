@@ -31,3 +31,12 @@ class User(db.Model,UserMixin):
         self.password_hash = generate_password_hash(password)
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
+    @property
+    def role(self):
+        pass
+    @role.setter
+    def role(self, role):
+        try:
+            self.roles.append(Role.query.filter_by(name=role).first())
+        except:
+            raise AttributeError('The role specified do not exists')
