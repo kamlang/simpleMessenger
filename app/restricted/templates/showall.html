@@ -8,7 +8,6 @@
         <tr class="w3-blue">
             <th>Id</th>
             <th>Username</th>
-            <th>Password</th>
             <th>Role</th>
             <th>Email</th>
             <th>Action</th>
@@ -19,10 +18,9 @@
         <tr>
             <td>{{ user.id }}</td>
             <td>{{ user.username }}</td>
-            <td>{{ user.password }}</td>
-	    <td>{% for role in user.roles %} {{ role.name }} {% endfor %}</td>
+	    <td>{% for role in user.roles %}{{role.name}}{% endfor %}</td>
             <td>{{ user.email}}</td>
-            <td><a href="{{ url_for('.delete', username=user.username) }}">Delete</a> <a href="{{ url_for('.edit', username=user.username) }}">Edit</a> </td>
+            <td><a href={{ url_for('.delete', username=user.username) }}>Delete</a> <a href={{ url_for('.edit', username=user.username) }}>Edit</a> </td>
         </tr>
         {% endfor %}
     </tbody>

@@ -1,6 +1,37 @@
-    rv = self.ensure_sync(before_func)()
-  File "/home/albin/Python/Flask/prj03/app/main/views.py", line 140, in isAdmin
-    if ACCESS['admin'] == g.currentUserRole:
-NameError: name 'ACCESS' is not defined
-127.0.0.1 - - [21/Jan/2022 18:44:22] "GET / HTTP/1.1" 500 -
+registration ok
+login ok
+next transfer everything to WTFforms done
+put a logout button  done
+check csrf token done
+auto increment id for user db ok
+create and admin panel to remove user done
+put a message like you're currently log as user (would require to check each time a page is loaded ? done
+implement user roles done
+menu role link to access dictionnary done
+restrict access to admin functionality done
+add Bootstrap support done
+add nice looking pages done
+update role, make a new fb for role. done
+add an extra database to play with foreign key. done
 
+setup https with let's encrypt
+
+setup email messages
+design a form to send a message
+
+create js so role when it changed
+set cookie params for timeout 
+create requirement.txt
+create custom error pages
+add search in notes feature
+
+think of nice feature to implement and draw how they should look
+make a profile page with the possibility of uploading a picture.
+And create article then allow user to comment.
+
+newsletter functionallity
+
+
+--> implement idadmin
+change db
+read on property setter getter sqlalchemy, try to remove init_class page 111
