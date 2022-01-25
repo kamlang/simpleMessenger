@@ -5,12 +5,16 @@
     <form method="post" action="">
 	{% for field in form %}
 	{% if not field == form.csrf_token %}
-	<p>{{ field.label}}  {{ field }}</p>
-	{% if field.errors %}{{ field.errors }}{% endif %}
+		<p>{{ field.label}}  {{ field }}</p>
 	{% endif %}
 	{% endfor %}
         {{ form.csrf_token }}
     </form>
+ {% for field, errors in form.errors.items() %}
+    <small class="form-text text-muted ">
+        {{ ', '.join(errors) }}
+    </small>
+ {%endfor%}
 </div>
 </div>
 {% endblock %}    

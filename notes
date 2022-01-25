@@ -39,3 +39,5 @@ Things to implement:
 description me, small cv, readings.
 validating password with regex.
 display form warning nicely
+
+page not confirmed show all remove submit label

@@ -60,7 +60,6 @@ td, th
     		</div>
  	</div>
 	{% else %}
-
 	<div class="w3-dropdown-hover">
     	<button class="w3-button">My Account</button>
     		<div class="w3-dropdown-content w3-bar-block w3-card-4">
@@ -68,17 +67,15 @@ td, th
             		<a href="/login" class="w3-bar-item w3-button">Login</a>
     		</div>
  	</div>
-
   		{% endif %}
 	{% if g.userIsAdmin %}
 	<button class="w3-bar-item w3-button w3-blue"><a href={{url_for('restricted.showall')}}>Admin panel</a></button>
   	{% endif %}
         </div>
         </div>
-
         {% with messages = get_flashed_messages(with_categories=true) %} {% if messages %} {% for category, message in messages %}
         <div class="w3-panel w3-sand w3-round-xlarge">
-            <p>{{category}} : {{ message }}</p>
+            <p>{{category}}: {{ message }}</p>
         </div>
         {% endfor %} {% endif %} {% endwith %}
     </div>

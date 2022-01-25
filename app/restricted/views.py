@@ -9,6 +9,7 @@ from .. import db
 from .forms import editUserForm
 errorMessage="An error happened!"
 successMessage="Operation succeed !"
+
 @restricted.route('/profile/<username>')
 @login_required
 def showprofile(username):
