@@ -10,6 +10,7 @@
             <th>Username</th>
             <th>Role</th>
             <th>Email</th>
+            <th>Confirmed</th>
             <th>Action</th>
         </tr>
     </thead>
@@ -20,6 +21,7 @@
             <td>{{ user.username }}</td>
 	    <td>{% for role in user.roles %}{{role.name}}{% endfor %}</td>
             <td>{{ user.email}}</td>
+            <td>{{ user.confirmed}}</td>
             <td><a href={{ url_for('.delete', username=user.username) }}>Delete</a> <a href={{ url_for('.edit', username=user.username) }}>Edit</a> </td>
         </tr>
         {% endfor %}

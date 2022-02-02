@@ -4,50 +4,14 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link rel="stylesheet" href="/static/styles.css">
 </head>
-<style>
-#form-center
-{
-max-width:500px;
-margin-left: auto;
-margin-right: auto;
-text-align: right;
-}
-table
-{
-max-width:80%;
-min-width:80%;
-}
-div.content
-{
-padding: 16px;
-min-height:1100px;
-margin-left: auto;
-margin-right: auto;
-}
-
-body
-{
-min-width:600px;
-max-width:980px;
-margin-left: auto;
-margin-right: auto;
-}
-td, th
-{
-  border-style: solid;
-  border-color: black;
-  border-width: 1px;
-}
-
-</style>
 <body>
     <!--header-->
     <div class="w3-container w3-margin-top">
         <div class="w3-main w3-bar w3-blue w3-round-xlarge">
             <div class="w3-left">
                 <button class="w3-bar-item w3-button w3-blue"><a href="/">Home</a></button>
-		<button class="w3-button w3-xlarge w3-hide-large" onclick="w3_open()">&#9776;</button>
             </div>
 
         <div class="w3-right">
@@ -55,7 +19,7 @@ td, th
 	<div class="w3-dropdown-hover w3-blue">
     	<button class="w3-button">My Account</button>
     		<div class="w3-dropdown-content w3-bar-block w3-card-4">
-      			<a href={{url_for('restricted.showprofile', username=current_user.username)}} class="w3-bar-item w3-button">My profile</a>
+      			<a href={{url_for('auth.showprofile', username=current_user.username)}} class="w3-bar-item w3-button">My profile</a>
       			<a href="/logout" class="w3-bar-item w3-button">Logout</a>
     		</div>
  	</div>
@@ -68,7 +32,7 @@ td, th
     		</div>
  	</div>
   		{% endif %}
-	{% if g.userIsAdmin %}
+	{% if current_user.is_role(role='Admin') %}
 	<button class="w3-bar-item w3-button w3-blue"><a href={{url_for('restricted.showall')}}>Admin panel</a></button>
   	{% endif %}
         </div>
@@ -89,15 +53,4 @@ td, th
         <h4 align="right">All rights reserved </h4>
     </div>
 </body>
-
-<script>
-    function w3_open() {
-      document.getElementById("mySidebar").style.display = "block";
-    }
-
-    function w3_close() {
-      document.getElementById("mySidebar").style.display = "none";
-    }
-</script>
-
 </html>

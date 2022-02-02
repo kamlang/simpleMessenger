@@ -1,10 +1,7 @@
 {% extends "parent.html" %} {% block contents %}
-<div id="form-center">
-	<div class="w3-container w3-left w3-blue w3-padding w3-round-large" style="margin:-10px;">{{ form_name }}</div>
 <div class="w3-container w3-sand  w3-margin w3-padding w3-round-xlarge">
-	Hello {{ username }}, your account confirmation failed.
-	<a href={url_for(auth.resendtoken)}>Resend email confirmation link.°</a>
- {%endfor%}
-</div>
+	Hello {{ username }}, your account is not confimed yet.
+	Check you emails and use the confirmation link sent. Confirmation link are only valid during 1 hour. If needed you can get a new one
+	<a href={{url_for('auth.resend_token')}}>here</a>.
 </div>
 {% endblock %}    
