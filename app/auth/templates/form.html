@@ -5,16 +5,15 @@
     <form method="post" action="">
 	{% for field in form %}
 	{% if not field == form.csrf_token %}
-		<p>{{ field.label}}  {{ field }}</p>
+	<p class="input_field">{%if not field == form.submit %}{{field.label}}{%endif%} {{ field }}</p>
+    	<span class="errors w3-text-red"> {{' '.join(form.errors[field.name])}}</span>
 	{% endif %}
 	{% endfor %}
         {{ form.csrf_token }}
-    </form>
- {% for field, errors in form.errors.items() %}
     <small class="form-text text-muted ">
-        {{ ', '.join(errors) }}
+	    {%if form_name == 'Login'%}<a href={{url_for('auth.reset_request')}}>Forgot passord</a>{%endif%}
     </small>
- {%endfor%}
+    </form>
 </div>
 </div>
 {% endblock %}    

@@ -1,5 +1,5 @@
-from . import db
-from flask_login import UserMixin
+from . import db,login_manager
+from flask_login import UserMixin, AnonymousUserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from flask import current_app
@@ -55,3 +55,14 @@ class User(db.Model,UserMixin):
         db.session.add(self)
         db.session.commit()
         return True
+
+    def is_role(self,role):
+        for r in self.roles:
+            if r.name == role:
+                return True
+        return False
+
+class AnonymousUser(AnonymousUserMixin):
+    def is_role(self,role):
+        return False
+login_manager.anonymous_user = AnonymousUser

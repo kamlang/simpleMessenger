@@ -10,17 +10,10 @@ from .forms import editUserForm
 errorMessage="An error happened!"
 successMessage="Operation succeed !"
 
-@restricted.route('/profile/<username>')
-@login_required
-def showprofile(username):
-    if current_user.username == username:
-        return render_template('profile.html',user=username)
-    abort(403)
-
 def admin_required(viewFunc):
     @wraps(viewFunc)
     def isAdmin(**Arg):
-        if g.userIsAdmin:
+        if current_user.is_role(role='Admin'):
             return viewFunc(**Arg)
         abort(403)
     return isAdmin
@@ -80,15 +73,3 @@ def getRolesList():
     for role in q:
         rolesList.append(role.name)
     return rolesList
-
-@restricted.before_request
-def isUserAdmin():
-    if current_user.is_authenticated:
-        g.userIsAdmin = False
-        if getUserRole(current_user.username) =='Admin':
-            g.userIsAdmin = True
-
-def getUserRole(user):
-    q=User.query.filter_by(username=user).first()
-    return q.roles[0].name
-    

@@ -13,31 +13,38 @@ add Bootstrap support done
 add nice looking pages done
 update role, make a new fb for role. done
 add an extra database to play with foreign key. done
+for admin view create a better way to get user role. done
+add remember me functionallity done
+display form warning nicely done
+modify register view as validators have been added to models done
 
-setup https with let's encrypt
 
+add validators in model
+validating password with regex.
 setup email messages
 design a form to send a message
+create custom error pages
+prevent bruteforce attack
 
+
+setup https with let's encrypt
 create js so role when it changed
 set cookie params for timeout 
 create requirement.txt
-create custom error pages
 add search in notes feature
 
 think of nice feature to implement and draw how they should look
+
 make a profile page with the possibility of uploading a picture.
 And create article then allow user to comment.
-
 newsletter functionallity
 
-add remember me functionallity
 see error raised by wtfroms
 
 Things to implement:
 
 description me, small cv, readings.
-validating password with regex.
-display form warning nicely
 
 page not confirmed show all remove submit label
+
+create dictionnary contain errors to get more consistency

@@ -1,0 +1,7 @@
+Hello {{ username }}!
+
+Please use the link below to reset your password.
+
+{{ url_for('auth.reset',token=token, _external=True) }}
+
+Glgmsh
