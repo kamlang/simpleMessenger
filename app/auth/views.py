@@ -1,7 +1,7 @@
 from flask import request, flash, url_for, redirect, render_template, current_app, session, g, abort
 from flask_login import login_user, current_user, logout_user,login_required
 from ..models import User,Role
-from .forms import registerForm,loginForm, passwordReset,usernameReset
+from .forms import registerForm,loginForm, passwordReset,usernameReset,editUser
 from . import auth
 from .. import db
 from .. import login_manager
@@ -9,6 +9,9 @@ from ..email import send_email
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from werkzeug.urls import url_parse
+from datetime import datetime
+from werkzeug.utils import secure_filename
+import os
 
 errorMessage="An error happened!"
 successMessage="Operation succeed !"
@@ -46,11 +49,11 @@ def login(): ### Restrict to unauthenticate user
         if user is not None and user.verify_password(password):
             login_user(user,form.remember_me.data)
             if not next_page or url_parse(next_page).netloc != '':
-                return redirect(url_for('auth.showprofile', username=user.username))
+                return redirect(url_for('auth.showprofile'))
             return redirect(next_page)
         else:
             flash("User do not exist or password is incorrect")
-            return redirect(url_for('auth.showprofile', username=user.username))
+            return redirect(url_for('auth.showprofile'))
 
     return render_template("form.html", form=form,form_name='Login')
 
@@ -107,7 +110,7 @@ def reset_request():
 def confirm(token):
     if current_user.confirm(token):
         flash("You're account is now active")
-        return redirect(url_for('auth.showprofile',username=current_user.username))
+        return redirect(url_for('auth.showprofile'))
     else: 
         flash(errorMessage)
         return redirect('auth.failed',username=current_user.username)
@@ -126,13 +129,11 @@ def logout():
     logout_user()
     return redirect('/')
 
-@auth.route('/profile/<username>')
+@auth.route('/profile')
 @login_required
 @confirm_required
-def showprofile(username):
-    if current_user.username == username:
-        return render_template('profile.html',username=username)
-    abort(403)
+def showprofile():
+    return render_template('profile.html')
 
 @login_manager.user_loader
 def load_user(id):
@@ -144,6 +145,28 @@ def resend_token():
     if not current_user.confirmed:
         send_token_confirm(current_user)
     return redirect('/')
+
+@auth.route('/edit/<username>', methods=['GET', 'POST'])
+@login_required
+@confirm_required
+def edit(username):
+    form=editUser()
+    if current_user.username != username:
+        abort(403)
+    if form.validate_on_submit():
+        user = User.query.filter_by(username=current_user.username).first()
+        if form.about_me.data:
+            user.about_me = form.about_me.data
+            db.session.add(user)
+            db.session.commit()
+        if form.avatar.data:
+            user.set_avatar(form.avatar.data)
+            db.session.add(user)
+            db.session.commit()
+        return redirect(url_for('auth.showprofile'))
+    return render_template("form.html", form=form,form_name='Edit your profile')
+
+    ### save path to userdb
 
 def send_token_confirm(user):
     token = user.generate_confirmation_token()
@@ -160,3 +183,10 @@ def send_token_reset(user):
         flash("An email has been sent to you.")
     except Exception as e:
         flash("Email was not sent")
+
+@auth.before_request
+def before_request():
+    if current_user.is_authenticated:
+        current_user.last_seen = datetime.utcnow()
+        db.session.commit()
+

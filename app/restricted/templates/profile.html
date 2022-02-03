@@ -1,7 +1,17 @@
 {% extends "parent.html" %} {% block contents %}
-<h2 align="center">Hello {{ username }}! </h2>
-<article class="w3-container">
-    <h3>Work in progress! </h3>
-    <p> More will come soon.</p>
-</article>
+<div class="header w3-container">
+	<small class="w3-left"> last seen on: {{current_user.last_seen_clean()}}</small>
+	<small class="w3-right"><a href={{url_for('auth.edit',username=current_user.username)}}>Edit</a></small>
+</div>
+<div class="profile w3-card-4 w3-round">	
+	<header class="w3-container w3-blue w3-padding">
+		Username: {{ current_user.username }}
+	</header>
+	<div class="w3-container w3-padding">
+	{%if current_user.avatar_name %}<img class="avatar " src="{{current_user.get_avatar_path()}}">{%endif%}
+	</div>
+	<div class="w3-container w3-blue">
+	{%if current_user.about_me %}About me: {{current_user.about_me }}<span>{%endif%}
+	</div>
+</div>
 {% endblock %}

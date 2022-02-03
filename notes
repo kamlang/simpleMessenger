@@ -25,7 +25,8 @@ setup email messages
 design a form to send a message
 create custom error pages
 prevent bruteforce attack
-
+secure file upload
+add image to profile
 
 setup https with let's encrypt
 create js so role when it changed

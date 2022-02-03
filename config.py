@@ -9,6 +9,7 @@ class Config:
     REMEMBER_COOKIE_SECURE = True
     SESSION_COOKIE_HTTPONLY = True
     REMEMBER_COOKIE_HTTPONLY = True
+    UPLOAD_FOLDER =  os.path.join(basedir, 'app/static/avatars')
 
 class DevelopmentConfig(Config):
     DEBUG = True

@@ -1,6 +1,7 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SubmitField
+from wtforms import StringField, PasswordField, BooleanField, SubmitField, FileField,TextAreaField
 from wtforms.validators import ValidationError, DataRequired, Email, EqualTo, Length,InputRequired, Regexp
+from flask_wtf.file import FileField, FileRequired,FileAllowed
 from ..models import User
 
 class loginForm(FlaskForm):
@@ -35,5 +36,10 @@ class passwordReset(FlaskForm):
     submit = SubmitField("Submit")
 
 class usernameReset(FlaskForm):##### After forgot password is pressed at login screen, asking for the username
-    username=StringField('Username',validators=[InputRequired(message="This field can not be empty"),Length(1,48) ])
+    username = StringField('Username',validators=[InputRequired(message="This field can not be empty"),Length(1,48) ])
+    submit = SubmitField("Submit")
+
+class editUser(FlaskForm):
+    about_me = TextAreaField('About me', render_kw={"rows": 4, "cols": 30})
+    avatar = FileField('image', validators=[FileAllowed(['jpg', 'png'], 'Images only!')])
     submit = SubmitField("Submit")
