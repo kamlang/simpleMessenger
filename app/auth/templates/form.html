@@ -2,7 +2,12 @@
 <div id="form-center">
 	<div class="w3-container w3-left w3-blue w3-padding w3-round-large" style="margin:-10px;">{{ form_name }}</div>
 <div class="w3-container w3-sand  w3-margin w3-padding w3-round-xlarge">
-    <form method="post" action="">
+	{%if form_name == 'Edit your profile'%}
+	<br>
+	<form method="POST" enctype="multipart/form-data">
+	{%else%}
+	<form method="POST" action="">
+	{%endif%}
 	{% for field in form %}
 	{% if not field == form.csrf_token %}
 	<p class="input_field">{%if not field == form.submit %}{{field.label}}{%endif%} {{ field }}</p>
