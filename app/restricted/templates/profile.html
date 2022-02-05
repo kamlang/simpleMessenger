@@ -1,17 +1,18 @@
 {% extends "parent.html" %} {% block contents %}
-<div class="header w3-container">
+
+<div id="form-center">
+	<div class="w3-container w3-left w3-blue w3-padding w3-round-large" style="margin:-10px;">My profile</div>
+	<div class="w3-container w3-right w3-blue w3-padding w3-round-large" style="margin:-10px;">Username: {{ current_user.username }}</div>
+
+<div class="w3-container w3-sand w3-margin w3-padding w3-round-xlarge">
+	<div class="w3-container w3-left">
+		<br>
+	{%if current_user.avatar_name %}<img class="avatar" src="{{current_user.get_avatar_path()}}">{%else%}<img class="avatar" src="/../static/avatars/default.png"> {%endif%}
+	{%if current_user.about_me %}About me: {{current_user.about_me }}{%else%}No description available{%endif%}
+	</div>
+			<hr>
 	<small class="w3-left"> last seen on: {{current_user.last_seen_clean()}}</small>
 	<small class="w3-right"><a href={{url_for('auth.edit',username=current_user.username)}}>Edit</a></small>
 </div>
-<div class="profile w3-card-4 w3-round">	
-	<header class="w3-container w3-blue w3-padding">
-		Username: {{ current_user.username }}
-	</header>
-	<div class="w3-container w3-padding">
-	{%if current_user.avatar_name %}<img class="avatar " src="{{current_user.get_avatar_path()}}">{%endif%}
-	</div>
-	<div class="w3-container w3-blue">
-	{%if current_user.about_me %}About me: {{current_user.about_me }}<span>{%endif%}
-	</div>
 </div>
 {% endblock %}

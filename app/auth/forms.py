@@ -41,5 +41,5 @@ class usernameReset(FlaskForm):##### After forgot password is pressed at login s
 
 class editUser(FlaskForm):
     about_me = TextAreaField('About me', render_kw={"rows": 4, "cols": 30})
-    avatar = FileField('image', validators=[FileAllowed(['jpg', 'png'], 'Images only!')])
+    avatar = FileField('Image', validators=[FileAllowed(['jpg', 'png'], 'Images only!')])
     submit = SubmitField("Submit")

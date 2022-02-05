@@ -48,9 +48,10 @@ margin :0px 0px 0px 0px
 
 .avatar
 {
-display:block;
 margin: auto;
 max-width: 150px;
+width:64px;
+height:64px;
 }
 
 .profile
@@ -59,4 +60,8 @@ max-width:350px;
 margin-top:20px;
 margin-left: auto;
 margin-right:auto;
+}
+.desc
+{
+max-width:350px;
 }

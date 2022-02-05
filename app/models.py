@@ -67,19 +67,23 @@ class User(db.Model,UserMixin):
                 return True
         return False
     def last_seen_clean(self):
-       return self.last_seen.ctime()
+        cleantime = self.last_seen.strftime('%A %d-%b-%Y, %H:%M')
+        return cleantime
 
     def set_avatar(self,avatar_data):
         import hashlib
         from PIL import Image
-        image = Image.open(avatar_data)
-        data = list(image.getdata())
-        image2 = Image.new(image.mode, image.size)
-        image2.putdata(data)
-        filename = hashlib.md5(self.username.encode())
-        self.avatar_name=filename.hexdigest()
-        image2.thumbnail((128,128))
-        image2.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename.hexdigest()),format='png')
+        try:
+            image = Image.open(avatar_data)
+            data = list(image.getdata())
+            image2 = Image.new(image.mode, image.size)
+            image2.putdata(data)
+            filename = hashlib.md5(self.username.encode())
+            self.avatar_name=filename.hexdigest()
+            image2.thumbnail((128,128))
+            image2.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename.hexdigest()),format='png')
+        except:
+            flash("Please provide a valid image file")
     def get_avatar_path(self):
         return os.path.join('../static/avatars/',self.avatar_name)
 
