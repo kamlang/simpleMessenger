@@ -17,16 +17,19 @@ for admin view create a better way to get user role. done
 add remember me functionallity done
 display form warning nicely done
 modify register view as validators have been added to models done
+add validators in model done
+create custom error pages done
+add image to profile done
 
 
-add validators in model
 validating password with regex.
 setup email messages
 design a form to send a message
-create custom error pages
 prevent bruteforce attack
-secure file upload
-add image to profile
+secure file upload checking mime type ?
+try to upload something stupid
+implement private message
+
 
 setup https with let's encrypt
 create js so role when it changed

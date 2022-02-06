@@ -40,11 +40,11 @@ def edit(username):
             try:
                 db.session.commit()
                 flash(successMessage)
-                return redirect('/showall')
+                return redirect(url_for('restricted.showall'))
             except Exception as e:
                 db.session.rollback()
                 flash("error in UPDATE operation")
-                return redirect('/showall')
+                return redirect(url_for('restricted.showall'))
     return render_template('edit.html',form=form,user=username)
 
 @restricted.route("/delete/<username>") ###Admin
@@ -61,7 +61,7 @@ def delete(username):
             logging.debug(e)
             db.session.rollback()
             flash(errorMessage)
-    return redirect('/showall')
+    return redirect(url_for('restricted.showall'))
 
 @login_manager.user_loader
 def load_user(id):
