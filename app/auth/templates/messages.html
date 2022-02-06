@@ -1,0 +1,18 @@
+{% extends "parent.html" %} {% block contents %}
+<div id="form-center">
+<div class="w3-container w3-left w3-blue w3-padding w3-round-large" style="margin:-10px;">Messages</div>
+<div class="w3-container w3-sand  w3-margin w3-padding w3-round-xlarge">
+	{%for message in messages %}
+		{%if current_user.username==message['recipient']%}
+			<div class="w3-container w3-red w3-margin w3-round-xlarge" align="left">
+				{{message['recipient'] }}: {{message['content']}}
+			</div>
+			{%else %}
+			<div class="w3-container w3-white w3-margin w3-round-xlarge"" align="left">
+				{{message['recipient'] }}: {{message['content']}}
+			</div>
+		{%endif%}
+	{%endfor%}
+</div>
+</div>
+{% endblock %}    

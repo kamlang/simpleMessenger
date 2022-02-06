@@ -168,6 +168,21 @@ def edit(username):
 
     ### save path to userdb
 
+@auth.route('/messages', methods=['GET', 'POST'])
+@login_required
+def messages():
+# if form.validate_on_submit():
+    get_messages = current_user.get_messages()
+    g.messages = []
+    messages={}
+    for m in get_messages:
+        messages['recipient'] = get_username(m.recipient)
+        messages['content'] = m.content
+        messages['time_sent'] = m.time_sent
+        g.messages.append(messages)
+        messages={}
+    return render_template("messages.html",messages=g.messages)
+
 def send_token_confirm(user):
     token = user.generate_confirmation_token()
     try:
@@ -189,4 +204,8 @@ def before_request():
     if current_user.is_authenticated:
         current_user.last_seen = datetime.utcnow()
         db.session.commit()
+
+def get_username(user_id):
+    u=User.query.get(user_id)
+    return u.username
 
