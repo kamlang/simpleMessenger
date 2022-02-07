@@ -1,7 +1,7 @@
 from flask import request, flash, url_for, redirect, render_template, current_app, session, g, abort
 from flask_login import login_user, current_user, logout_user,login_required
-from ..models import User,Role
-from .forms import registerForm,loginForm, passwordReset,usernameReset,editUser
+from ..models import User,Role,Message
+from .forms import registerForm,loginForm, passwordReset,usernameReset,editUser, sendMessage
 from . import auth
 from .. import db
 from .. import login_manager
@@ -181,7 +181,19 @@ def messages():
         messages['time_sent'] = m.time_sent
         g.messages.append(messages)
         messages={}
-    return render_template("messages.html",messages=g.messages)
+    return render_template("display_messages.html",messages=g.messages)
+
+@auth.route('/send/<username>', methods=['GET', 'POST'])
+@login_required
+def send_message(username):
+    form=sendMessage()
+    form_name = 'Send a message to: ' + username
+    if form.validate_on_submit():
+        recipient = User.query.filter_by(username=username).first()
+        content = request.form['content']
+        current_user.send_message(recipient,content)
+        return redirect(url_for('auth.messages'))
+    return render_template('form.html',form_name=form_name,form=form)
 
 def send_token_confirm(user):
     token = user.generate_confirmation_token()
