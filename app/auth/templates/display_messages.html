@@ -4,13 +4,13 @@
 <div class="w3-container w3-sand  w3-margin w3-padding w3-round-xlarge">
 	{%for message in messages %}
 		{%if current_user.username==message['recipient']%}
-			<div class="w3-container w3-red w3-margin w3-round-xlarge" align="left">
+		<div class="w3-container w3-red w3-margin w3-round-xlarge">
 				Me:<a href="{{url_for('auth.send_message',username=message['recipient'])}}", align="right">Reply</a>
 				<p> {{message['content']}}</p>
 			</div>
 			{%else %}
-			<div class="w3-container w3-white w3-margin w3-round-xlarge" align="left">
-				{{message['recipient'] }}<a href="{{url_for('auth.send_message',username=message['recipient'])}}", align="right">Reply</a>: <p> {{message['content']}} </p>
+			<div class="w3-container w3-white w3-margin w3-round-xlarge">
+				{{message['recipient'] }} <a href="{{url_for('auth.send_message',username=message['recipient'])}}", align="right">Reply</a>: <p> {{message['content']}} </p>
 			</div>
 		{%endif%}
 	{%endfor%}
