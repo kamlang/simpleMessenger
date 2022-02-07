@@ -172,11 +172,12 @@ def edit(username):
 @login_required
 def messages():
 # if form.validate_on_submit():
-    get_messages = current_user.get_messages()
+    get_messages = current_user.get_all_messages()
     g.messages = []
     messages={}
     for m in get_messages:
         messages['recipient'] = get_username(m.recipient)
+        messages['sender'] = current_user.get_sender(m)
         messages['content'] = m.content
         messages['time_sent'] = m.time_sent
         g.messages.append(messages)

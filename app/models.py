@@ -82,10 +82,14 @@ class User(db.Model,UserMixin):
         db.session.add(self)
         db.session.commit()
 
-    def get_messages(self):
+    def get_all_messages(self):
         sent_messages=Message.query.join(UserMessages, (UserMessages.messages_id==Message.id)).filter_by(sender=self.id)
         received_messages = Message.query.filter_by(recipient=self.id)
         return sent_messages.union(received_messages).order_by(Message.time_sent.desc()).all()
+   
+    def get_sender(self,message):
+        sender_id=UserMessages.query.filter_by(messages_id=message.id).first().sender
+        return User.query.get(sender_id).username
 
     def is_role(self,role):
         for r in self.roles:
