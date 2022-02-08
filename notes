@@ -20,6 +20,7 @@ modify register view as validators have been added to models done
 add validators in model done
 create custom error pages done
 add image to profile done
+implement private message done
 
 
 validating password with regex.
@@ -28,7 +29,6 @@ design a form to send a message
 prevent bruteforce attack
 secure file upload checking mime type ?
 try to upload something stupid
-implement private message
 
 
 setup https with let's encrypt

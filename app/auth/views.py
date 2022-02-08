@@ -1,7 +1,7 @@
 from flask import request, flash, url_for, redirect, render_template, current_app, session, g, abort
 from flask_login import login_user, current_user, logout_user,login_required
 from ..models import User,Role
-from .forms import registerForm,loginForm, passwordReset,usernameReset,editUser, sendMessage
+from .forms import registerForm,loginForm, passwordReset,usernameReset,editUser, sendReply, sendTo
 from . import auth
 from .. import db
 from .. import login_manager
@@ -168,22 +168,25 @@ def edit(username):
 
     ### save path to userdb
 
-@auth.route('/messages')
+@auth.route('/messages', methods=['GET', 'POST'])
 @login_required
 def messages():
-# if form.validate_on_submit():
+    form=sendTo()
+    if form.validate_on_submit():
+        recipient = request.form['recipient']
+        return redirect(url_for('auth.send_message',username=recipient))
     page = request.args.get('page', 1, type=int)
     messages = current_user.get_all_messages(page)
     next_url = url_for('auth.messages', page=messages.next_num) \
         if messages.has_next else None
     prev_url = url_for('auth.messages', page=messages.prev_num) \
         if messages.has_prev else None
-    return render_template("display_messages.html",messages=messages.items, next_url=next_url, prev_url=prev_url)
+    return render_template("display_messages.html",messages=messages.items, next_url=next_url, prev_url=prev_url,form=form)
 
 @auth.route('/send/<username>', methods=['GET', 'POST'])
 @login_required
 def send_message(username):
-    form=sendMessage()
+    form=sendReply()
     form_name = 'Send a message to: ' + username
     if form.validate_on_submit():
         recipient = User.query.filter_by(username=username).first()

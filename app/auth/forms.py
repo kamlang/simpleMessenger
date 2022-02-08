@@ -44,6 +44,14 @@ class editUser(FlaskForm):
     avatar = FileField('', validators=[FileAllowed(['jpg', 'png'], 'Images only!')])
     submit = SubmitField("Submit")
 
-class sendMessage(FlaskForm):
-    content= TextAreaField('Message',validators=[Length(0,280,message='Keep it short.')], render_kw={"rows": 4, "cols": 30})
+class sendReply(FlaskForm):
+    content= TextAreaField('',validators=[Length(0,280,message='Keep it short.')], render_kw={"rows": 2, "cols": 45})
     submit = SubmitField("Submit")
+
+class sendTo(FlaskForm):
+    recipient = StringField('To: ',validators=[InputRequired(message="This field can not be empty"),Length(4,24,message='Username must be at least 4 characters long.'),Regexp('^[0-9A-Za-z_]+$',message='Special characters are not allowed.') ])
+    submit = SubmitField('Submit')
+    def validate_recipient(self,recipient):
+        user=User.query.filter_by(username=recipient.data).first()
+        if user is None:
+            raise ValidationError('This user do not exists.')
