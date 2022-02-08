@@ -1,19 +1,18 @@
-{% extends "parent.html" %} {% block contents %}
-
-<div id="form-center">
-	<div class="w3-container w3-left w3-blue w3-padding w3-round-large" style="margin:-10px;">My profile</div>
-	<div class="w3-container w3-right w3-blue w3-padding w3-round-large" style="margin:-10px;">Username: {{ current_user.username }}</div>
-
-<div class="w3-container w3-sand w3-margin w3-padding w3-round-xlarge">
-	<div class="w3-container w3-left w3-padding w3-margin">
-		<br>
+{% extends "parent.html" %} {% block app_content %}
+<div class="container">
+		<div class="row">
+    <div class="col-sm-4">
+	<div class="well well-sm">
+  Username: {{ current_user.username }}
+	<p>	
 	{%if current_user.avatar_name %}<img class="avatar" src="{{current_user.get_avatar_path()}}">{%else%}<img class="avatar" src="/../static/avatars/default.png"> {%endif%}
+	</p>
+	<p>
 	{%if current_user.about_me %}About me: {{current_user.about_me }}{%else%}No description available{%endif%}
-	</div>
-			<div class="w3-container w3-margin w3-white">		
-	<small class="w3-left"> last seen on: {{current_user.last_seen_clean()}}</small>
-	<small class="w3-right"><a href={{url_for('auth.edit',username=current_user.username)}}>Edit</a></small>
-			</div>
-	</div>
+	</p>
+	<small> last seen on: {{current_user.last_seen_clean()}}</small>
+	<small><a href={{url_for('auth.edit',username=current_user.username)}}>Edit</a></small>
+</div>
+</div>
 </div>
 {% endblock %}
