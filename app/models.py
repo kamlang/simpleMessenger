@@ -17,6 +17,15 @@ class UserRoles(db.Model):
     user_id = db.Column(db.Integer(), db.ForeignKey('users.id', ondelete='CASCADE'))
     role_id = db.Column(db.Integer(), db.ForeignKey('roles.id', ondelete='CASCADE'))
 
+class Message(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    recipient_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    body = db.Column(db.String(140))
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    def __repr__(self):
+        return '<Message {}>'.format(self.body)
+
 class User(db.Model,UserMixin):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
@@ -24,6 +33,12 @@ class User(db.Model,UserMixin):
     password_hash=db.Column(db.String(100))
     email=db.Column(db.String(155))
     roles = db.relationship('Role', secondary='user_roles')
+    messages_sent = db.relationship('Message',
+                                    foreign_keys='Message.sender_id',
+                                    backref='author', lazy='dynamic')
+    messages_received = db.relationship('Message',
+                                        foreign_keys='Message.recipient_id',
+                                        backref='recipient', lazy='dynamic')
     confirmed = db.Column(db.Boolean, default=False)
     about_me = db.Column(db.String(140))
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
@@ -61,10 +76,21 @@ class User(db.Model,UserMixin):
         db.session.commit()
         return True
 
+    def send_message(self,recipient,body):
+        message=Message(author=self,recipient=recipient,body=body)
+        db.session.add(message)
+        db.session.commit()
+
+    def get_all_messages(self,page):
+        r=self.messages_received
+        s=self.messages_sent
+        return r.union(s).order_by(Message.timestamp.desc()).paginate(page,current_app.config['POSTS_PER_PAGE'],False)
+
     def is_role(self,role):
         for r in self.roles:
             if r.name == role:
                 return True
+
         return False
     def last_seen_clean(self):
         cleantime = self.last_seen.strftime('%A %d-%b-%Y, %H:%M')
@@ -86,6 +112,7 @@ class User(db.Model,UserMixin):
             flash("Please provide a valid image file")
     def get_avatar_path(self):
         return os.path.join('../static/avatars/',self.avatar_name)
+
 
 class AnonymousUser(AnonymousUserMixin):
     def is_role(self,role):

@@ -1,7 +1,7 @@
 from flask import request, flash, url_for, redirect, render_template, current_app, session, g, abort
 from flask_login import login_user, current_user, logout_user,login_required
 from ..models import User,Role
-from .forms import registerForm,loginForm, passwordReset,usernameReset,editUser
+from .forms import registerForm,loginForm, passwordReset,usernameReset,editUser, sendMessage
 from . import auth
 from .. import db
 from .. import login_manager
@@ -168,6 +168,30 @@ def edit(username):
 
     ### save path to userdb
 
+@auth.route('/messages')
+@login_required
+def messages():
+# if form.validate_on_submit():
+    page = request.args.get('page', 1, type=int)
+    messages = current_user.get_all_messages(page)
+    next_url = url_for('auth.messages', page=messages.next_num) \
+        if messages.has_next else None
+    prev_url = url_for('auth.messages', page=messages.prev_num) \
+        if messages.has_prev else None
+    return render_template("display_messages.html",messages=messages.items, next_url=next_url, prev_url=prev_url)
+
+@auth.route('/send/<username>', methods=['GET', 'POST'])
+@login_required
+def send_message(username):
+    form=sendMessage()
+    form_name = 'Send a message to: ' + username
+    if form.validate_on_submit():
+        recipient = User.query.filter_by(username=username).first()
+        content = request.form['content']
+        current_user.send_message(recipient,content)
+        return redirect(url_for('auth.messages'))
+    return render_template('form.html',form_name=form_name,form=form)
+
 def send_token_confirm(user):
     token = user.generate_confirmation_token()
     try:
@@ -189,4 +213,3 @@ def before_request():
     if current_user.is_authenticated:
         current_user.last_seen = datetime.utcnow()
         db.session.commit()
-

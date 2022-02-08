@@ -1,0 +1,24 @@
+{% extends "parent.html" %} {% block contents %}
+<div id="form-center">
+<div class="w3-container w3-left w3-blue w3-padding w3-round-large" style="margin:-10px;">Messages</div>
+<div class="w3-container w3-sand  w3-margin w3-padding w3-round-xlarge">
+	{%for message in messages %}
+	{%if current_user.username == message.recipient.username %}
+		<div class="w3-container w3-green w3-margin w3-round-xlarge">
+			<div class="w3-left"> From: {{message.author.username}}</div>
+				<p> {{message.body}}</p>
+				 <a href="{{url_for('auth.send_message',username=message.author.username)}}", align="right">Reply</a>
+			</div>
+			{%else %}
+			<div class="w3-container w3-white w3-margin w3-round-xlarge">
+				<div class="w3-left"> To: {{message.recipient.username}}</div>
+				<p> {{message.body}}</p>
+				 <a href="{{url_for('auth.send_message',username=message.recipient.username)}}", align="right">Reply</a>
+			</div>
+		{%endif%}
+	{%endfor%}
+	{%if prev_url %}<a href={{prev_url}}>Previous</a>{%endif%}
+		{%if next_url %}<a href={{next_url}}>Next</a>{%endif%}
+</div>
+</div>
+{% endblock %}    
