@@ -13,6 +13,7 @@ class Config:
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
     ADMINS= ['glgmsh@protonmail.com']
+    POSTS_PER_PAGE=3
 
 class DevelopmentConfig(Config):
     DEBUG = True

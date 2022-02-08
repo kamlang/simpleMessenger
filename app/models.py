@@ -11,24 +11,20 @@ class Role(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(50), unique=True)
 
-class Message(db.Model):
-    __tablename__ = 'messages'
-    id = db.Column(db.Integer(), primary_key=True)
-    content = db.Column(db.String(280))
-    recipient = db.Column(db.Integer, db.ForeignKey('users.id'))
-    time_sent = db.Column(db.DateTime, default=datetime.utcnow)
-
-class UserMessages(db.Model):
-    __tablename__ = 'user_messages'
-    id = db.Column(db.Integer(), primary_key=True)
-    sender = db.Column(db.Integer(), db.ForeignKey('users.id', ondelete='CASCADE'))
-    messages_id = db.Column(db.Integer(), db.ForeignKey('messages.id', ondelete='CASCADE'))
-
 class UserRoles(db.Model):
     __tablename__ = 'user_roles'
     id = db.Column(db.Integer(), primary_key=True)
     user_id = db.Column(db.Integer(), db.ForeignKey('users.id', ondelete='CASCADE'))
     role_id = db.Column(db.Integer(), db.ForeignKey('roles.id', ondelete='CASCADE'))
+
+class Message(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    recipient_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    body = db.Column(db.String(140))
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    def __repr__(self):
+        return '<Message {}>'.format(self.body)
 
 class User(db.Model,UserMixin):
     __tablename__ = 'users'
@@ -37,7 +33,12 @@ class User(db.Model,UserMixin):
     password_hash=db.Column(db.String(100))
     email=db.Column(db.String(155))
     roles = db.relationship('Role', secondary='user_roles')
-    messages= db.relationship('Message', secondary='user_messages')
+    messages_sent = db.relationship('Message',
+                                    foreign_keys='Message.sender_id',
+                                    backref='author', lazy='dynamic')
+    messages_received = db.relationship('Message',
+                                        foreign_keys='Message.recipient_id',
+                                        backref='recipient', lazy='dynamic')
     confirmed = db.Column(db.Boolean, default=False)
     about_me = db.Column(db.String(140))
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
@@ -75,21 +76,15 @@ class User(db.Model,UserMixin):
         db.session.commit()
         return True
 
-
-    def send_message(self,user,content):
-        message=Message(content=content,recipient=user.id)
-        self.messages.append(message)
-        db.session.add(self)
+    def send_message(self,recipient,body):
+        message=Message(author=self,recipient=recipient,body=body)
+        db.session.add(message)
         db.session.commit()
 
-    def get_all_messages(self):
-        sent_messages=Message.query.join(UserMessages, (UserMessages.messages_id==Message.id)).filter_by(sender=self.id)
-        received_messages = Message.query.filter_by(recipient=self.id)
-        return sent_messages.union(received_messages).order_by(Message.time_sent.desc()).all()
-   
-    def get_sender(self,message):
-        sender_id=UserMessages.query.filter_by(messages_id=message.id).first().sender
-        return User.query.get(sender_id).username
+    def get_all_messages(self,page):
+        r=self.messages_received
+        s=self.messages_sent
+        return r.union(s).order_by(Message.timestamp.desc()).paginate(page,current_app.config['POSTS_PER_PAGE'],False)
 
     def is_role(self,role):
         for r in self.roles:

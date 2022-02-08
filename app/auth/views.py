@@ -1,6 +1,6 @@
 from flask import request, flash, url_for, redirect, render_template, current_app, session, g, abort
 from flask_login import login_user, current_user, logout_user,login_required
-from ..models import User,Role,Message
+from ..models import User,Role
 from .forms import registerForm,loginForm, passwordReset,usernameReset,editUser, sendMessage
 from . import auth
 from .. import db
@@ -168,21 +168,17 @@ def edit(username):
 
     ### save path to userdb
 
-@auth.route('/messages', methods=['GET', 'POST'])
+@auth.route('/messages')
 @login_required
 def messages():
 # if form.validate_on_submit():
-    get_messages = current_user.get_all_messages()
-    g.messages = []
-    messages={}
-    for m in get_messages:
-        messages['recipient'] = get_username(m.recipient)
-        messages['sender'] = current_user.get_sender(m)
-        messages['content'] = m.content
-        messages['time_sent'] = m.time_sent
-        g.messages.append(messages)
-        messages={}
-    return render_template("display_messages.html",messages=g.messages)
+    page = request.args.get('page', 1, type=int)
+    messages = current_user.get_all_messages(page)
+    next_url = url_for('auth.messages', page=messages.next_num) \
+        if messages.has_next else None
+    prev_url = url_for('auth.messages', page=messages.prev_num) \
+        if messages.has_prev else None
+    return render_template("display_messages.html",messages=messages.items, next_url=next_url, prev_url=prev_url)
 
 @auth.route('/send/<username>', methods=['GET', 'POST'])
 @login_required
@@ -217,8 +213,3 @@ def before_request():
     if current_user.is_authenticated:
         current_user.last_seen = datetime.utcnow()
         db.session.commit()
-
-def get_username(user_id):
-    u=User.query.get(user_id)
-    return u.username
-
