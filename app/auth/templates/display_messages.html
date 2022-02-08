@@ -1,33 +1,30 @@
-{% extends "parent.html" %} {% block contents %}
-<div id="form-center">
-<div class="w3-container w3-left w3-blue w3-padding w3-round-large" style="margin:-10px;">Messages</div>
-<div class="w3-container w3-sand  w3-margin w3-padding w3-round-xlarge">
+{% extends "parent.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
 
+{% block app_content %}
+<div class="container">
 	{%for message in messages %}
+	<div class="well well-sm">
 	{%if current_user.username == message.recipient.username %}
-		<div class="w3-container w3-green w3-margin w3-round-xlarge">
-			<div class="w3-left"> From: {{message.author.username}}</div>
+			<div> From: {{message.author.username}}</div>
 				<p> {{message.body}}</p>
 				 <a href="{{url_for('auth.send_message',username=message.author.username)}}", align="left">Reply</a>
 				<small> {{moment(message.timestamp).format('LLL')}}</small>
-			</div>
 			{%else %}
-			<div class="w3-container w3-white w3-margin w3-round-xlarge">
-				<div class="w3-left"> To: {{message.recipient.username}}</div>
+			<div> To: {{message.recipient.username}}</div>
 				<p> {{message.body}}</p>
 				 <a href="{{url_for('auth.send_message',username=message.recipient.username)}}", align="left">Reply</a>
 				 <small> {{moment(message.timestamp).format('LLL')}}</small>
-			</div>
 		{%endif%}
+	</div>
 	{%endfor%}
 	{%if prev_url %}<a href={{prev_url}}>Previous</a>{%endif%}
 		{%if next_url %}<a href={{next_url}}>Next</a>{%endif%}
 		<hr>
-	<form method="POST" action="">
-		{{ form.csrf_token }}
-	Send a message to: {{form.recipient}} {{form.submit(value='Send')}}
-	<span class="errors w3-text-red"> {{' '.join(form.errors['recipient'])}}</span>
-	</form>
-</div>
-</div>
+	<div class="row">
+        <div class="col-md-4">
+            {{ wtf.quick_form(form) }}
+	</div>
+	</div>
+	</div>
 {% endblock %}    

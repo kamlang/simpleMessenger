@@ -1,60 +1,56 @@
-<!doctype html>
-<html>
+{% extends 'bootstrap/base.html' %}
 
-<head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
-    <link rel="stylesheet" href="/static/styles.css">
-</head>
 {% block scripts %}
+    {{ super() }}
     {{ moment.include_moment() }}
 {% endblock %}
-<body>
-    <!--header-->
-    <div class="w3-container w3-margin-top">
-        <div class="w3-main w3-bar w3-blue w3-round">
-            <div class="w3-left">
-                <button class="w3-bar-item w3-button w3-blue"><a href="/">Home</a></button>
-            </div>
 
-        <div class="w3-right">
-        {% if current_user.is_authenticated %}
-	<div class="w3-dropdown-hover w3-blue">
-    	<button class="w3-button">My Account</button>
-    		<div class="w3-dropdown-content w3-bar-block w3-card-4">
-      			<a href={{url_for('auth.showprofile' )}} class="w3-bar-item w3-button">My profile</a>
-      			<a href={{url_for('auth.messages' )}} class="w3-bar-item w3-button">My messages</a>
-			<a href="{{url_for('auth.logout')}}" class="w3-bar-item w3-button">Logout</a>
-    		</div>
- 	</div>
-	{% else %}
-	<div class="w3-dropdown-hover">
-    	<button class="w3-button">My Account</button>
-    		<div class="w3-dropdown-content w3-bar-block w3-card-4">
-			<a href="{{url_for('auth.register')}}" class="w3-bar-item w3-button">Register</a>
-            		<a href="{{url_for('auth.login')}}" class="w3-bar-item w3-button">Login</a>
-    		</div>
- 	</div>
-  		{% endif %}
-	{% if current_user.is_role(role='Admin') %}
-	<button class="w3-bar-item w3-button w3-blue"><a href={{url_for('restricted.showall')}}>Admin panel</a></button>
-  	{% endif %}
-        </div>
-        </div>
-        {% with messages = get_flashed_messages(with_categories=true) %} {% if messages %} {% for category, message in messages %}
-        <div class="w3-panel w3-sand w3-round">
-            <p>{{category}}: {{ message }}</p>
-        </div>
-        {% endfor %} {% endif %} {% endwith %}
-    </div>
-    <!--contents-->
-	         <div class="content w3-container w3-border w3-margin w3-center	w3-round">
-        {% block contents %} {% endblock %}
-    </div>
-    <!--footer-->
-    <hr>
-    <div>
-        <h4 align="right">All rights reserved </h4>
-    </div>
-</body>
-</html>
+{% block title %}
+    {% if title %}{{ title }}{% else %} SimpleMessenger {% endif %}
+{% endblock %}
+{% block navbar %}
+<nav class="navbar navbar-default">
+  <div class="container-fluid">
+    <!-- Links -->
+    <ul class="nav navbar-nav">
+{% if current_user.is_authenticated %}
+      <li class="nav-item">
+      	<a href={{url_for('auth.showprofile' )}} class="nav-link">My profile</a>
+      </li>
+      <li class="nav-item">
+      	<a href={{url_for('auth.messages' )}} class="nav-link">My messages</a>
+      </li>
+      <li class="nav-item">
+    <a href="{{url_for('auth.logout')}}" class=nav-link">Logout</a>
+      </li>
+      {%else%}
+      <li class="nav-item">
+      <a href="{{url_for('auth.register')}}" class="nav-link">Register</a>
+      </li>
+      <li class="nav-item">
+      	<a href="{{url_for('auth.login')}}" class="nav-link">Login</a>
+      </li>
+      {%endif%}
+      {% if current_user.is_role(role='Admin') %}
+      <li class="nav-item">
+      	<a class="navlink "href={{url_for('restricted.showall')}}>Admin panel</a>
+      </li>
+      {%endif%}
+    </ul>
+  </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-info" role="alert">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+        {# application content needs to be provided in the app_content block #}
+	{%block app_content%}{%endblock%}
+  </div>
+{% endblock %}

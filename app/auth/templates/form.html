@@ -1,24 +1,11 @@
-{% extends "parent.html" %} {% block contents %}
-<div id="form-center">
-	<div class="w3-container w3-left w3-blue w3-padding w3-round-large" style="margin:-10px;">{{ form_name }}</div>
-<div class="w3-container w3-sand  w3-margin w3-padding w3-round-xlarge">
-	<br>
-	{%if form_name == 'Edit your profile'%}
-	<form method="POST" enctype="multipart/form-data">
-	{%else%}
-	<form method="POST" action="">
-	{%endif%}
-	{% for field in form %}
-	{% if not field == form.csrf_token %}
-	<p class="input_field">{%if not field == form.submit %}{{field.label}}{%endif%} {{ field }}</p>
-    	<span class="errors w3-text-red"> {{' '.join(form.errors[field.name])}}</span>
-	{% endif %}
-	{% endfor %}
-        {{ form.csrf_token }}
-    <small class="form-text text-muted ">
-	    {%if form_name == 'Login'%}<a href={{url_for('auth.reset_request')}}>Forgot passord</a>{%endif%}
-    </small>
-    </form>
-</div>
-</div>
-{% endblock %}    
+{% extends "parent.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+<h1>{{form_name}}</h1>
+    <div class="row">
+        <div class="col-md-4">
+            {{ wtf.quick_form(form) }}
+        </div>
+    </div>
+{% endblock %}

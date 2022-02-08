@@ -1,11 +1,11 @@
- {% extends "parent.html" %} {% block contents %}
-<caption align="top">
+ {% extends "parent.html" %}
+ {% block app_content %}
+ <caption align="top">
     <h2>List of Users</h2>
 </caption>
-<div class="w3-responsive w3-margin">
-		 <table id="form-center" class="w3-table-all w3-centered w3-round-xlarge">
+		 <table class="table">
     <thead>
-        <tr class="w3-blue">
+        <tr class="">
             <th>Id</th>
             <th>Username</th>
             <th>Role</th>
@@ -27,5 +27,4 @@
         {% endfor %}
     </tbody>
 </table>
-</div>
 {% endblock %}
