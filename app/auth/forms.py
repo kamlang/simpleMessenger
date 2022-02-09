@@ -55,3 +55,13 @@ class sendTo(FlaskForm):
         user=User.query.filter_by(username=recipient.data).first()
         if user is None:
             raise ValidationError('This user do not exists.')
+
+class createConversation(FlaskForm):
+    usernames=StringField('Username(s) (if many have to be separated with a space.)',validators=[InputRequired(message="This field can not be empty"),Regexp('^[0-9A-Za-z_\s]+$',message='Special characters are not allowed.') ])
+    content= TextAreaField('',validators=[Length(0,280,message='Keep it short.')], render_kw={"rows": 2, "cols": 45})
+    submit = SubmitField('Submit')
+    def validate_usernames(self,usernames):
+        for username in str(usernames.data).split():
+            user=User.query.filter_by(username=username).first()
+            if user is None:
+                raise ValidationError('Username {} do not exists.'.format(username))

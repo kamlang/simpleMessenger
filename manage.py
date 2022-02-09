@@ -1,6 +1,7 @@
 import os
 from app import db,create_app
-from app.models import User,Role,Message
+#from app.models import User,Role
+from app.models import User,Role,Message,Conversation
 from flask import render_template
 import logging
 from logging.handlers import SMTPHandler
@@ -10,7 +11,8 @@ app = create_app(os.getenv('FLASK_CONFIG') or 'default')
 
 @app.shell_context_processor
 def make_shell_context():
-    return dict(app=app,db=db, User=User, Role=Role,Message=Message)
+#    return dict(app=app,db=db, User=User, Role=Role)
+    return dict(app=app,db=db, User=User, Role=Role,Message=Message,Conversation=Conversation)
 
 ### Adding error handler
 

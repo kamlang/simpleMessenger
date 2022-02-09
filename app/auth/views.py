@@ -1,7 +1,7 @@
 from flask import request, flash, url_for, redirect, render_template, current_app, session, g, abort
 from flask_login import login_user, current_user, logout_user,login_required
 from ..models import User,Role
-from .forms import registerForm,loginForm, passwordReset,usernameReset,editUser, sendReply, sendTo
+from .forms import registerForm,loginForm, passwordReset,usernameReset,editUser, sendReply, sendTo,createConversation
 from . import auth
 from .. import db
 from .. import login_manager
@@ -49,11 +49,11 @@ def login(): ### Restrict to unauthenticate user
         if user is not None and user.verify_password(password):
             login_user(user,form.remember_me.data)
             if not next_page or url_parse(next_page).netloc != '':
-                return redirect(url_for('auth.showprofile'))
+                return redirect(url_for('auth.conversations'))
             return redirect(next_page)
         else:
             flash("User do not exist or password is incorrect")
-            return redirect(url_for('auth.showprofile'))
+            return redirect(url_for('auth.conversations'))
 
     return render_template("form.html", form=form,form_name='Login')
 
@@ -168,32 +168,30 @@ def edit(username):
 
     ### save path to userdb
 
-@auth.route('/messages', methods=['GET', 'POST'])
+@auth.route('/newconversation', methods=['GET', 'POST'])
 @login_required
-def messages():
-    form=sendTo()
+def new_conversation():
+    form = createConversation()
     if form.validate_on_submit():
-        recipient = request.form['recipient']
-        return redirect(url_for('auth.send_message',username=recipient))
-    page = request.args.get('page', 1, type=int)
-    messages = current_user.get_all_messages(page)
-    next_url = url_for('auth.messages', page=messages.next_num) \
-        if messages.has_next else None
-    prev_url = url_for('auth.messages', page=messages.prev_num) \
-        if messages.has_prev else None
-    return render_template("display_messages.html",messages=messages.items, next_url=next_url, prev_url=prev_url,form=form)
+        usernames=form.usernames.data.split()
+        content=form.content.data
+        username_list = []
+        for username in usernames:
+            username_list.append(username)
+        current_user.create_conversation(username_list,content)
+        return redirect(url_for('auth.conversations'))
+    return render_template("form.html",form=form)
 
-@auth.route('/send/<username>', methods=['GET', 'POST'])
+@auth.route('/conversations')
 @login_required
-def send_message(username):
-    form=sendReply()
-    form_name = 'Send a message to: ' + username
-    if form.validate_on_submit():
-        recipient = User.query.filter_by(username=username).first()
-        content = request.form['content']
-        current_user.send_message(recipient,content)
-        return redirect(url_for('auth.messages'))
-    return render_template('form.html',form_name=form_name,form=form)
+def conversations():
+    page = request.args.get('page', 1, type=int)
+    conversations=current_user.get_conversations(page)
+    next_url = url_for('auth.conversations', page=conversations.next_num) \
+        if conversations.has_next else None
+    prev_url = url_for('auth.conversations', page=conversations.prev_num) \
+        if conversations.has_prev else None
+    return render_template("display_conversations.html",conversations=conversations.items, next_url=next_url, prev_url=prev_url)
 
 def send_token_confirm(user):
     token = user.generate_confirmation_token()

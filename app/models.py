@@ -17,14 +17,32 @@ class UserRoles(db.Model):
     user_id = db.Column(db.Integer(), db.ForeignKey('users.id', ondelete='CASCADE'))
     role_id = db.Column(db.Integer(), db.ForeignKey('roles.id', ondelete='CASCADE'))
 
-class Message(db.Model):
+class ConversationUsers(db.Model):
+    __tablename__='conversations_users'
     id = db.Column(db.Integer, primary_key=True)
+    converation_id= db.Column(db.Integer(), db.ForeignKey('conversations.id', ondelete='CASCADE'))
+    user_id = db.Column(db.Integer(), db.ForeignKey('users.id', ondelete='CASCADE'))
+
+class ConversationMessages(db.Model):
+    __tablename__='conversations_messages'
+    id = db.Column(db.Integer, primary_key=True)
+    conversation_id = db.Column(db.Integer(), db.ForeignKey('conversations.id', ondelete='CASCADE'))
+    message_id = db.Column(db.Integer(), db.ForeignKey('messages.id', ondelete='CASCADE'))
+
+class Conversation(db.Model):
+    __tablename__='conversations'
+    id = db.Column(db.Integer, primary_key=True)
+    users = db.relationship('User', secondary='conversations_users', lazy='dynamic')
+    messages = db.relationship('Message', secondary='conversations_messages',order_by='desc(Message.timestamp)', lazy='dynamic',backref='belongs_to')
+    admin_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    timestamp= db.Column(db.DateTime, default=datetime.utcnow)
+
+class Message(db.Model):
+    __tablename__ = 'messages'
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.String())
     sender_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    recipient_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    body = db.Column(db.String(140))
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
-    def __repr__(self):
-        return '<Message {}>'.format(self.body)
+    timestamp= db.Column(db.DateTime, default=datetime.utcnow)
 
 class User(db.Model,UserMixin):
     __tablename__ = 'users'
@@ -33,16 +51,51 @@ class User(db.Model,UserMixin):
     password_hash=db.Column(db.String(100))
     email=db.Column(db.String(155))
     roles = db.relationship('Role', secondary='user_roles')
-    messages_sent = db.relationship('Message',
-                                    foreign_keys='Message.sender_id',
-                                    backref='author', lazy='dynamic')
-    messages_received = db.relationship('Message',
-                                        foreign_keys='Message.recipient_id',
-                                        backref='recipient', lazy='dynamic')
+
     confirmed = db.Column(db.Boolean, default=False)
     about_me = db.Column(db.String(140))
+    messages_sent = db.relationship('Message',
+                                    foreign_keys='Message.sender_id',
+                                    backref='sender', lazy='dynamic')
+    conversations= db.relationship('Conversation',
+                                    foreign_keys='Conversation.admin_id',
+                                    backref='admin', lazy='dynamic')
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
     avatar_name = db.Column(db.String(32))
+
+    def create_conversation(self,usernames,content):
+        c=Conversation()
+        m=Message(sender=self,content=content)
+        c.users.append(self)
+        c.messages.append(m)
+        for username in usernames: ### validation is done in the form
+            user=User.query.filter_by(username=username).first()
+            c.users.append(user)
+        self.conversations.append(c)
+        db.session.commit()
+
+    def add_user_conversation(self,conversation,usernames):
+        if self.id == conversation.admin.id:
+            for username in usernames:
+                user=User.query.filter_by(username=username).first()
+                if q is not None:
+                    conversation.users.append(user)
+        else:
+             raise Exception("Only admin of a group can add users")
+            
+    def add_message_conversation(self,conversation,content):
+        if self in conversation.users.all():
+            message=Message(sender=self,content=content)
+            conversation.timestamp = datetime.utcnow()
+            conversation.messages.append(message)
+            db.session.commit()
+
+
+    def get_conversations(self,page):
+        conversations = Conversation.query.filter(Conversation.users.contains(self)).order_by(Conversation.timestamp.desc()).paginate(page,current_app.config['POSTS_PER_PAGE'],False)
+        return conversations
+#        return r.union(s).order_by(Message.timestamp.desc()).paginate(page,current_app.config['POSTS_PER_PAGE'],False)
+
     @property
     def password(self):
         raise AttributeError('Password is not a readable attribute')
@@ -76,22 +129,12 @@ class User(db.Model,UserMixin):
         db.session.commit()
         return True
 
-    def send_message(self,recipient,body):
-        message=Message(author=self,recipient=recipient,body=body)
-        db.session.add(message)
-        db.session.commit()
-
-    def get_all_messages(self,page):
-        r=self.messages_received
-        s=self.messages_sent
-        return r.union(s).order_by(Message.timestamp.desc()).paginate(page,current_app.config['POSTS_PER_PAGE'],False)
-
     def is_role(self,role):
         for r in self.roles:
             if r.name == role:
                 return True
-
         return False
+
     def last_seen_clean(self):
         cleantime = self.last_seen.strftime('%A %d-%b-%Y, %H:%M')
         return cleantime
