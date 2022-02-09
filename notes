@@ -23,6 +23,14 @@ add image to profile done
 implement private message done
 
 
+about conversation:
+
+give the possibility to leave a group.
+give the ability to remove a message.
+auto update discussion and conversation
+display messages when clikcking on conversations
+
+
 validating password with regex.
 setup email messages
 design a form to send a message
