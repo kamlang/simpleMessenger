@@ -74,29 +74,28 @@ class User(db.Model,UserMixin):
         self.conversations.append(c)
         db.session.commit()
 
-    def add_user_conversation(self,conversation,usernames):
+    def add_users_conversation(self,conversation_id,usernames):
+        conversation = Conversation.query.get(conversation_id)
         if self.id == conversation.admin.id:
-            for username in usernames:
+            for username in usernames: ### validation is done in the form 
                 user=User.query.filter_by(username=username).first()
-                if user is not None:
-                    conversation.users.append(user)
-        else:
-             raise Exception("Only admin of a group can add users")
+                conversation.users.append(user)
+                db.session.commit()
+        raise Exception("Only admin of a group can add users")
             
-    def add_message_conversation(self,conversation,content):
+    def add_message_conversation(self,conversation_id,content):
+        conversation=Conversation.query.get(conversation_id)
         if self in conversation.users.all():
             message=Message(sender=self,content=content)
             conversation.timestamp = datetime.utcnow()
             conversation.messages.append(message)
             db.session.commit()
 
-    ### Return a Tuple containg a list of users and messages which belong to a conversation
-    def get_conversation(self,conversation_id,page):
+    def get_conversation(self,conversation_id):
         conversation = Conversation.query.get(conversation_id)
         users = conversation.users.all()
         if self in users:
-            messages= conversation.messages.paginate(page,current_app.config['POSTS_PER_PAGE'],False)
-            return (users,messages)
+            return conversation
         return None
 
     def get_conversations(self,page):

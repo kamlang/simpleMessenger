@@ -23,12 +23,6 @@ class registerForm(FlaskForm):
         if user is not None:
             raise ValidationError('Please use a different username.')
     
-#    def validate_email(self,email):
-#        user=User.query.filter_by(email=email.data).first()
-#        if user is not None:
-#            raise ValidationError('Please use a different email.')
-
-
 class passwordReset(FlaskForm):
     username=StringField('Username',validators=[InputRequired(message="This field can not be empty"),Length(1,48) ])
     password = PasswordField('Password', validators=[InputRequired(message="This field can not be empty"), EqualTo('confirm', message='Passwords must match')])
@@ -46,7 +40,7 @@ class editUser(FlaskForm):
 
 class sendReply(FlaskForm):
     content= TextAreaField('',validators=[Length(0,280,message='Keep it short.')], render_kw={"rows": 2, "cols": 45})
-    submit = SubmitField("Submit")
+    submit = SubmitField("Send")
 
 class sendTo(FlaskForm):
     recipient = StringField('Send a message to: ',validators=[InputRequired(message="This field can not be empty"),Length(4,24,message='Username must be at least 4 characters long.'),Regexp('^[0-9A-Za-z_]+$',message='Special characters are not allowed.') ])
@@ -60,6 +54,16 @@ class createConversation(FlaskForm):
     usernames=StringField('Username(s) (if many have to be separated with a space.)',validators=[InputRequired(message="This field can not be empty"),Regexp('^[0-9A-Za-z_\s]+$',message='Special characters are not allowed.') ])
     content= TextAreaField('',validators=[Length(0,280,message='Keep it short.')], render_kw={"rows": 2, "cols": 45})
     submit = SubmitField('Submit')
+    def validate_usernames(self,usernames):
+        for username in str(usernames.data).split():
+            user=User.query.filter_by(username=username).first()
+            if user is None:
+                raise ValidationError('Username {} do not exists.'.format(username))
+
+
+class addUserConversation(FlaskForm):
+    usernames=StringField('',validators=[InputRequired(message="This field can not be empty"),Regexp('^[0-9A-Za-z_\s]+$',message='Special characters are not allowed.') ])
+    submit = SubmitField('Add user(s)')
     def validate_usernames(self,usernames):
         for username in str(usernames.data).split():
             user=User.query.filter_by(username=username).first()

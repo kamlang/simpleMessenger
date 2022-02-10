@@ -3,24 +3,29 @@
 
 {% block app_content %}
 <div class="container">
-	{%for message in messages %}
 	<div class="well well-sm">
-	<div> From: {{message.sender.username}}
-		Participant: {%for user in users %}
+		<small> You can use the field below to add other users to the conversation, if many separate username with space.</small>
+            {{ wtf.quick_form(form_add) }}
+	</div>
+<div class="well well-sm">
+Participant: {%for user in users %}
 			{%if current_user.username != user.username%}
 				{{user.username}}
 			{%else%} me
 			{%endif%} 
-			{%endfor%}
-		</div>
-			<p> {{message.content}}</p>
-				<small> {{moment(message.timestamp).format('LLL')}}</small>
 
+	{%endfor%}
+	<span style="float: right;">Admin: {{ admin }}</span>
+	{%for message in messages %}
+	<div class="well well-sm" style="background-color: #ffffff;">
+	 From: {{message.sender.username}}
+		<small style="float: right;"> {{moment(conversation.timestamp).format('LLL')}}</small>
+			<p> {{message.content}}</p>
 	</div>
 	{%endfor%}
 	{%if prev_url %}<a href={{prev_url}}>Previous</a>{%endif%}
 		{%if next_url %}<a href={{next_url}}>Next</a>{%endif%}
-		<hr>
-            {{ wtf.quick_form(form) }}
+            {{ wtf.quick_form(form_send) }}
+	</div>
 	</div>
 {% endblock %}    

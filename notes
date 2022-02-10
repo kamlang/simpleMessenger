@@ -21,6 +21,8 @@ add validators in model done
 create custom error pages done
 add image to profile done
 implement private message done
+display messages when clikcking on conversations done
+give the possiblity to send a message in a conversation (be carefull to validation) done
 
 
 about conversation:
@@ -28,7 +30,6 @@ about conversation:
 give the possibility to leave a group.
 give the ability to remove a message.
 auto update discussion and conversation
-display messages when clikcking on conversations
 
 
 validating password with regex.

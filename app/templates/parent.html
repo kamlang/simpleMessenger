@@ -9,6 +9,7 @@
     {% if title %}{{ title }}{% else %} SimpleMessenger {% endif %}
 {% endblock %}
 {% block navbar %}
+<body style="background-color: #7d9ac6;">
 <nav class="navbar navbar-default">
   <div class="container-fluid">
     <!-- Links -->
@@ -47,7 +48,6 @@
   </div>
 </nav>
 {% endblock %}
-
 {% block content %}
     <div class="container">
         {% with messages = get_flashed_messages() %}
@@ -61,3 +61,4 @@
 	{%block app_content%}{%endblock%}
   </div>
 {% endblock %}
+</body>
