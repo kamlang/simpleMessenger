@@ -78,7 +78,7 @@ class User(db.Model,UserMixin):
         if self.id == conversation.admin.id:
             for username in usernames:
                 user=User.query.filter_by(username=username).first()
-                if q is not None:
+                if user is not None:
                     conversation.users.append(user)
         else:
              raise Exception("Only admin of a group can add users")
@@ -90,11 +90,18 @@ class User(db.Model,UserMixin):
             conversation.messages.append(message)
             db.session.commit()
 
+    ### Return a Tuple containg a list of users and messages which belong to a conversation
+    def get_conversation(self,conversation_id,page):
+        conversation = Conversation.query.get(conversation_id)
+        users = conversation.users.all()
+        if self in users:
+            messages= conversation.messages.paginate(page,current_app.config['POSTS_PER_PAGE'],False)
+            return (users,messages)
+        return None
 
     def get_conversations(self,page):
         conversations = Conversation.query.filter(Conversation.users.contains(self)).order_by(Conversation.timestamp.desc()).paginate(page,current_app.config['POSTS_PER_PAGE'],False)
         return conversations
-#        return r.union(s).order_by(Message.timestamp.desc()).paginate(page,current_app.config['POSTS_PER_PAGE'],False)
 
     @property
     def password(self):

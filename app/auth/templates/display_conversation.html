@@ -1,0 +1,26 @@
+{% extends "parent.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+<div class="container">
+	{%for message in messages %}
+	<div class="well well-sm">
+	<div> From: {{message.sender.username}}
+		Participant: {%for user in users %}
+			{%if current_user.username != user.username%}
+				{{user.username}}
+			{%else%} me
+			{%endif%} 
+			{%endfor%}
+		</div>
+			<p> {{message.content}}</p>
+				<small> {{moment(message.timestamp).format('LLL')}}</small>
+
+	</div>
+	{%endfor%}
+	{%if prev_url %}<a href={{prev_url}}>Previous</a>{%endif%}
+		{%if next_url %}<a href={{next_url}}>Next</a>{%endif%}
+		<hr>
+            {{ wtf.quick_form(form) }}
+	</div>
+{% endblock %}    

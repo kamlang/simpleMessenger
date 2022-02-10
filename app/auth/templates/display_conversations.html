@@ -1,0 +1,27 @@
+{% extends "parent.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+<div class="container">
+	{%for conversation in conversations%}
+	<a href ="{{url_for('auth.conversation',conversation_id = conversation.id)}}">
+	<div class="well well-sm">
+		<div> From: {{conversation.messages.first().sender.username}}
+			Participant: {%for user in conversation.users %}
+				{%if current_user.username != user.username%}
+					{{user.username}}
+				{%else%} me
+				{%endif%} 
+			{%endfor%}
+		</div>
+			<p> {{conversation.messages.first().content}}</p>
+				<small> {{moment(conversation.timestamp).format('LLL')}}</small>
+	</div>
+	{%endfor%}
+	{%if prev_url %}<a href={{prev_url}}>Previous</a>{%endif%}
+		{%if next_url %}<a href={{next_url}}>Next</a>{%endif%}
+		<hr>
+		<a href="{{url_for('auth.new_conversation')}}">Start a new conversation</a>
+	</div>
+	</a>
+{% endblock %}    

@@ -170,6 +170,7 @@ def edit(username):
 
 @auth.route('/newconversation', methods=['GET', 'POST'])
 @login_required
+@confirm_required
 def new_conversation():
     form = createConversation()
     if form.validate_on_submit():
@@ -184,6 +185,7 @@ def new_conversation():
 
 @auth.route('/conversations')
 @login_required
+@confirm_required
 def conversations():
     page = request.args.get('page', 1, type=int)
     conversations=current_user.get_conversations(page)
@@ -192,6 +194,23 @@ def conversations():
     prev_url = url_for('auth.conversations', page=conversations.prev_num) \
         if conversations.has_prev else None
     return render_template("display_conversations.html",conversations=conversations.items, next_url=next_url, prev_url=prev_url)
+
+@auth.route('/conversation/<conversation_id>')
+@login_required
+@confirm_required
+def conversation(conversation_id):
+    form = sendReply()
+    page = request.args.get('page', 1, type=int)
+    conversation = current_user.get_conversation(conversation_id,page)
+    if not conversation is None:
+        users,messages = conversation
+        next_url = url_for('auth.conversation',conversation_id=conversation_id, page=messages.next_num) \
+            if messages.has_next else None
+        prev_url = url_for('auth.conversation',conversation_id=conversation_id, page=messages.prev_num) \
+            if messages.has_prev else None
+        return render_template("display_conversation.html",messages=messages.items,users=users, next_url=next_url, prev_url=prev_url,form=form)
+    abort(403)
+
 
 def send_token_confirm(user):
     token = user.generate_confirmation_token()
