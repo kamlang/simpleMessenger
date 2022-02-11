@@ -93,4 +93,3 @@ class usernameReset(
         ],
     )
     submit = SubmitField("Submit")
-

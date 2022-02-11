@@ -10,17 +10,18 @@ from flask_bootstrap import Bootstrap
 db = SQLAlchemy()
 login_manager = LoginManager()
 login_manager.session_protection = "strong"
-login_manager.login_view = 'auth.login'
+login_manager.login_view = "auth.login"
 migrate = Migrate()
 mail = Mail()
-moment=Moment()
-bootstrap=Bootstrap()
+moment = Moment()
+bootstrap = Bootstrap()
+
 
 def create_app(config_name):
     app = Flask(__name__)
     app.config.from_object(config[config_name])
     config[config_name].init_app(app)
-    migrate.init_app(app,db)
+    migrate.init_app(app, db)
     login_manager.init_app(app)
     mail.init_app(app)
     db.init_app(app)
@@ -30,7 +31,8 @@ def create_app(config_name):
     from .main import main as main_blueprint
     from .auth import auth as auth_blueprint
     from .restricted import restricted as restricted_blueprint
+
     app.register_blueprint(main_blueprint)
-    app.register_blueprint(auth_blueprint,url_prefix='/auth')
-    app.register_blueprint(restricted_blueprint,url_prefix='/admin')
+    app.register_blueprint(auth_blueprint, url_prefix="/auth")
+    app.register_blueprint(restricted_blueprint, url_prefix="/admin")
     return app

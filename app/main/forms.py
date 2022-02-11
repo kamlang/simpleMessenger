@@ -19,6 +19,7 @@ from wtforms.validators import (
 from flask_wtf.file import FileField, FileRequired, FileAllowed
 from app.models import User
 
+
 class editUser(FlaskForm):
     about_me = TextAreaField(
         "About me",
