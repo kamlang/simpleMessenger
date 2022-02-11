@@ -40,7 +40,6 @@ def unauthenticated_required(viewFunc):
 
 ###### Defining views
 
-
 @auth.route("/login", methods=["GET", "POST"])
 @unauthenticated_required
 def login():  ### Restrict to unauthenticate user
@@ -58,7 +57,6 @@ def login():  ### Restrict to unauthenticate user
         else:
             flash("User do not exist or password is incorrect")
             return redirect(url_for("main.conversations"))
-
     return render_template("form.html", form=form, form_name="Login")
 
 

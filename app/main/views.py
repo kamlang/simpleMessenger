@@ -42,8 +42,9 @@ def confirm_required(viewFunc):
 
 @main.route("/")
 def home():
+    if current_user.is_authenticated:
+        return redirect(url_for('main.conversations'))
     return redirect(url_for("auth.login"))
-
 
 @main.route("/profile")
 @login_required
@@ -137,7 +138,10 @@ def conversation(conversation_id):
         return redirect(url_for("main.conversation", conversation_id=conversation_id))
 
     page = request.args.get("page", 1, type=int)
-    conversation = current_user.get_conversation(conversation_id)
+    try:
+        conversation = current_user.get_conversation(conversation_id)
+    except:
+        abort(404)
     if not conversation is None:
         users = conversation.users.all()
         messages = conversation.messages.paginate(

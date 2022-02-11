@@ -1,9 +1,7 @@
 import os
 from app import db, create_app
-
 # from app.models import User,Role
 from app.models import User, Role, Message, Conversation
-from flask import render_template
 import logging
 from logging.handlers import SMTPHandler
 from logging.handlers import RotatingFileHandler
@@ -17,26 +15,6 @@ def make_shell_context():
     return dict(
         app=app, db=db, User=User, Role=Role, Message=Message, Conversation=Conversation
     )
-
-
-### Adding error handler
-
-
-@app.errorhandler(404)
-def not_found_error(error):
-    return render_template("404.html"), 404
-
-
-@app.errorhandler(403)
-def not_found_error(error):
-    return render_template("403.html"), 403
-
-
-@app.errorhandler(500)
-def internal_error(error):
-    db.session.rollback()
-    return render_template("500.html"), 500
-
 
 ### Adding logging
 
