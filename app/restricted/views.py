@@ -1,22 +1,22 @@
-from . import restricted
 from flask import request, flash, url_for, redirect, render_template, current_app, session, g, abort
 import logging
 from flask_login import login_user, current_user, logout_user,login_required
-from .. import login_manager
-from ..models import User,Role
+#from .. import login_manager
 from functools import wraps
-from .. import db
-from .forms import editUserForm
+from app import db
+from app.models import User,Role
+from app.restricted.forms import editUserForm
+from app.restricted import restricted
 errorMessage="An error happened!"
 successMessage="Operation succeed !"
 
-def admin_required(viewFunc):
-    @wraps(viewFunc)
-    def isAdmin(**Arg):
+def admin_required(f):
+    @wraps(f)
+    def is_admin(**args):
         if current_user.is_role(role='Admin'):
-            return viewFunc(**Arg)
+            return f(**args)
         abort(403)
-    return isAdmin
+    return is_admin
 
 @restricted.route('/showall') ### Admin
 @login_required
@@ -62,10 +62,6 @@ def delete(username):
             db.session.rollback()
             flash(errorMessage)
     return redirect(url_for('restricted.showall'))
-
-@login_manager.user_loader
-def load_user(id):
-    return User.query.get(id)
 
 def getRolesList():
     rolesList=[]

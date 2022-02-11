@@ -16,10 +16,10 @@
     <ul class="nav navbar-nav navbar-left">
 {% if current_user.is_authenticated %}
       <li class="nav-item">
-      	<a href={{url_for('auth.showprofile' )}} class="nav-link">My profile</a>
+      	<a href={{url_for('main.showprofile' )}} class="nav-link">My profile</a>
       </li>
       <li class="nav-item">
-      	<a href={{url_for('auth.conversations' )}} class="nav-link">My conversations</a>
+      	<a href={{url_for('main.conversations' )}} class="nav-link">My conversations</a>
       </li>
       <li class="nav-item">
     <a href="{{url_for('auth.logout')}}" class=nav-link">Logout</a>

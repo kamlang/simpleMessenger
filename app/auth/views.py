@@ -1,12 +1,10 @@
 from flask import request, flash, url_for, redirect, render_template, current_app, session, g, abort
 from flask_login import login_user, current_user, logout_user,login_required
-from ..models import User,Role
-from .forms import registerForm,loginForm, passwordReset,usernameReset,editUser, sendReply,\
-sendTo,createConversation, addUserConversation
-from . import auth
-from .. import db
-from .. import login_manager
-from ..email import send_email
+from app.models import User,Role
+from app.auth.forms import registerForm,loginForm, passwordReset,usernameReset
+from app.auth import auth
+from app import db
+from app.email import send_email
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from werkzeug.urls import url_parse
@@ -17,24 +15,16 @@ import os
 errorMessage="An error happened!"
 successMessage="Operation succeed !"
 
-###### Defining some custom decorator
+###### Definig some custom decorator
 
-def confirm_required(viewFunc): 
-    @wraps(viewFunc)
-    def isConfirmed(*args,**kwargs):
-        if current_user.confirmed:
-            return viewFunc(*args,**kwargs)
-        flash('Current account has not been confirmed yet.')
-        return redirect(url_for('auth.logout'))
-    return isConfirmed
 
 def unauthenticated_required(viewFunc):
     @wraps(viewFunc)
-    def isUnauthenticated(*args,**kwargs):
+    def is_unauthenticated(*args,**kwargs):
         if current_user.is_anonymous:
             return viewFunc(*args,**kwargs)
         return redirect('/')
-    return isUnauthenticated
+    return is_unauthenticated
 
 ###### Defining views
 
@@ -50,11 +40,11 @@ def login(): ### Restrict to unauthenticate user
         if user is not None and user.verify_password(password):
             login_user(user,form.remember_me.data)
             if not next_page or url_parse(next_page).netloc != '':
-                return redirect(url_for('auth.conversations'))
+                return redirect(url_for('main.conversations'))
             return redirect(next_page)
         else:
             flash("User do not exist or password is incorrect")
-            return redirect(url_for('auth.conversations'))
+            return redirect(url_for('main.conversations'))
 
     return render_template("form.html", form=form,form_name='Login')
 
@@ -114,11 +104,11 @@ def confirm(token):
         return redirect(url_for('auth.showprofile'))
     else: 
         flash(errorMessage)
-        return redirect('auth.failed',username=current_user.username)
+        return redirect('auth.registration_failed')
 
-@auth.route("/failed/<username>")
+@auth.route("/registration_failed")
 @login_required
-def failed(username):
+def registration_failed():
     if not current_user.confirmed:
         return render_template('failed.html',username=current_user.username)    
     return redirect('/')
@@ -130,108 +120,12 @@ def logout():
     logout_user()
     return redirect('/')
 
-@auth.route('/profile')
-@login_required
-@confirm_required
-def showprofile():
-    return render_template('profile.html')
-
-@login_manager.user_loader
-def load_user(id):
-    return User.query.get(id)
-
 @auth.route('/resend_token')
 @login_required
 def resend_token():
     if not current_user.confirmed:
         send_token_confirm(current_user)
     return redirect('/')
-
-@auth.route('/edit/<username>', methods=['GET', 'POST'])
-@login_required
-@confirm_required
-def edit(username):
-    form=editUser()
-    if current_user.username != username:
-        abort(403)
-    if form.validate_on_submit():
-        user = User.query.filter_by(username=current_user.username).first()
-        if form.about_me.data:
-            user.about_me = form.about_me.data
-            db.session.add(user)
-            db.session.commit()
-        if form.avatar.data:
-            user.set_avatar(form.avatar.data)
-            db.session.add(user)
-            db.session.commit()
-        return redirect(url_for('auth.showprofile'))
-    return render_template("form.html", form=form,form_name='Edit your profile')
-
-    ### save path to userdb
-
-@auth.route('/newconversation', methods=['GET', 'POST'])
-@login_required
-@confirm_required
-def new_conversation():
-    form = createConversation()
-    if form.validate_on_submit():
-        usernames=form.usernames.data.split()
-        content=form.content.data
-        username_list = []
-        for username in usernames:
-            username_list.append(username)
-        current_user.create_conversation(username_list,content)
-        return redirect(url_for('auth.conversations'))
-    return render_template("form.html",form=form)
-
-@auth.route('/conversations')
-@login_required
-@confirm_required
-def conversations():
-    page = request.args.get('page', 1, type=int)
-    conversations=current_user.get_conversations(page)
-    next_url = url_for('auth.conversations', page=conversations.next_num) \
-        if conversations.has_next else None
-    prev_url = url_for('auth.conversations', page=conversations.prev_num) \
-        if conversations.has_prev else None
-    return render_template("display_conversations.html",conversations=conversations.items, 
-            next_url=next_url, prev_url=prev_url)
-
-@auth.route('/conversation/<conversation_id>', methods=['GET', 'POST'])
-@login_required
-@confirm_required
-def conversation(conversation_id):
-    form_send = sendReply()
-    form_add= addUserConversation()
-    if form_add.validate_on_submit():
-        usernames=form_add.usernames.data.split()
-        username_list = []
-        for username in usernames:
-            username_list.append(username)
-        try:
-            current_user.add_users_conversation(conversation_id,username_list)
-        except:
-            flash('Only admin of a group can add a user.')
-        return redirect(url_for('auth.conversation',conversation_id=conversation_id))
-    if form_send.validate_on_submit():
-        content=form_send.content.data
-        current_user.add_message_conversation(conversation_id,content)
-        return redirect(url_for('auth.conversation',conversation_id=conversation_id))
-
-    page = request.args.get('page', 1, type=int)
-    conversation = current_user.get_conversation(conversation_id)
-    if not conversation is None:
-        users=conversation.users.all()
-        messages = conversation.messages.paginate(page,current_app.config['POSTS_PER_PAGE'],False)
-        admin=conversation.admin.username
-        next_url = url_for('auth.conversation',conversation_id=conversation_id, page=messages.next_num) \
-            if messages.has_next else None
-        prev_url = url_for('auth.conversation',conversation_id=conversation_id, page=messages.prev_num) \
-            if messages.has_prev else None
-        return render_template("display_conversation.html",messages=messages.items,users=users, 
-                next_url=next_url, prev_url=prev_url,form_send=form_send,form_add=form_add,admin=admin,
-                conversation=conversation)
-    abort(403)
 
 def send_token_confirm(user):
     token = user.generate_confirmation_token()
@@ -249,8 +143,3 @@ def send_token_reset(user):
     except Exception as e:
         flash("Email was not sent")
 
-@auth.before_request
-def before_request():
-    if current_user.is_authenticated:
-        current_user.last_seen = datetime.utcnow()
-        db.session.commit()

@@ -12,7 +12,7 @@
 				{%else%} me
 				{%endif%} 
 		{%endfor%}
-	<a href ="{{url_for('auth.conversation',conversation_id = conversation.id)}}">
+	<a href ="{{url_for('main.conversation',conversation_id = conversation.id)}}">
 	<div class="well well-sm" style="background-color: #ffffff;">
 		 From: {{conversation.messages.first().sender.username}}
 			<small style="float: right;"> {{moment(conversation.timestamp).format('LLL')}}</small>
@@ -24,7 +24,7 @@
 	{%if prev_url %}<a href={{prev_url}}>Previous</a>{%endif%}
 		{%if next_url %}<a href={{next_url}}>Next</a>{%endif%}
 		<hr>
-		<a href="{{url_for('auth.new_conversation')}}">Start a new conversation</a>
+		<a href="{{url_for('main.new_conversation')}}">Start a new conversation</a>
 	</div>
 	</a>
 	</div>

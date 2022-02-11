@@ -5,6 +5,7 @@ from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from flask import current_app
 import os
 from datetime import datetime
+from app import login_manager
 
 class Role(db.Model):
     __tablename__ = 'roles'
@@ -79,9 +80,9 @@ class User(db.Model,UserMixin):
         if self.id == conversation.admin.id:
             for username in usernames: ### validation is done in the form 
                 user=User.query.filter_by(username=username).first()
-                conversation.users.append(user)
-                db.session.commit()
-        raise Exception("Only admin of a group can add users")
+                if not user in conversation.users.all():
+                    conversation.users.append(user)
+                    db.session.commit()
             
     def add_message_conversation(self,conversation_id,content):
         conversation=Conversation.query.get(conversation_id)
@@ -167,3 +168,8 @@ class AnonymousUser(AnonymousUserMixin):
     def is_role(self,role):
         return False
 login_manager.anonymous_user = AnonymousUser
+
+@login_manager.user_loader
+def load_user(id):
+    return User.query.get(id)
+

@@ -27,9 +27,16 @@ give the possiblity to send a message in a conversation (be carefull to validati
 
 about conversation:
 
+change the way registration is handled. don't log user in to confirm account
 give the possibility to leave a group.
 give the ability to remove a message.
 auto update discussion and conversation
+remove welcom page go directly to login
+add avatars in conversation
+fix admin panel
+uuid for conversation
+validate url parameters
+maybe with werkzeug
 
 
 validating password with regex.
