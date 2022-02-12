@@ -28,6 +28,7 @@ give the possiblity to send a message in a conversation (be carefull to validati
 about conversation:
 
 change the way registration is handled. don't log user in to confirm account
+changing loggin implementation so it's clean
 give the possibility to leave a group.
 give the ability to remove a message.
 auto update discussion and conversation
