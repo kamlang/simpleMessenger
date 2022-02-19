@@ -17,7 +17,7 @@ Participant: {%for user in users %}
 	<span style="float: right;">Admin: {{ admin }}</span>
 	{%for message in messages %}
 	<div class="well well-sm" id="message_container" style="background-color: #ffffff;">
-		<span id="username">From: {{message.sender.username}}</span>
+		<span id="from">From: {{message.sender.username}}</span>
 		<small style="float: right;" id="timestamp"> {{moment(message.timestamp).format('LLL')}}</small>
 			<p id="message_content"> {{message.content}}</p>
 	</div>
@@ -62,21 +62,25 @@ let target = document.querySelector('#message_container');
 observer.observe(target);
 
             function sse() {
-		var source = new EventSource("{{url_for('main.conversation_stream',conversation_id = conversation.id)}}");
+		var source = new EventSource("{{url_for('main.stream',username=current_user.username)}}");
+		conversation_id = {{ conversation.id}}
                 source.onmessage = function(e) {
 		    let parentElement = document.getElementById('conversation_container');
 		    let last_message = document.getElementById('message_container');
 		    let new_message = last_message.cloneNode(true);
-		    let myArray = e.data.split("|");
-		    let username = myArray[0];
-		    let content = myArray.slice(1,);
+		    	const json = e.data.replaceAll("'",'"');
+			const obj = JSON.parse(json);
+			const from = obj.from;
+			const content = obj.content;
+			if (conversation_id == obj.conversation_id){
 		    let timestampNode = new_message.querySelector("#timestamp");
-		    let usernameNode = new_message.querySelector("#username");
+		    let fromNode = new_message.querySelector("#from");
 		    let contentNode = new_message.querySelector("#message_content");
 		    timestampNode.innerText = moment().format('LLL');
-		    usernameNode.innerText = "From: "+ username;
+		    fromNode.innerText = "From: "+ from;
 		    contentNode.innerText = content;
 		    parentElement.insertBefore(new_message,last_message);
+					}
                 };
             }
 		sse();

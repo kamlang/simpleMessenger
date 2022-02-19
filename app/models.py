@@ -95,6 +95,7 @@ class User(db.Model, UserMixin):
             c.users.append(user)
         self.conversations.append(c)
         db.session.commit()
+        return c.id
 
     def add_users_conversation(self, conversation_id, usernames):
         conversation = Conversation.query.get(conversation_id)

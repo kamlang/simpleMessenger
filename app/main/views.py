@@ -42,9 +42,9 @@ def confirm_required(viewFunc):
 
 ### Event loop
 
-def event_stream(conversation_id=None):
+def event_stream(username):
     pubsub = red.pubsub()
-    pubsub.subscribe('conversation_' + str(conversation_id))
+    pubsub.subscribe(username)
     # TODO: handle client disconnection.
     # if user inactive ?
     for message in pubsub.listen():
@@ -56,25 +56,17 @@ def event_stream(conversation_id=None):
 
 @login_required
 @confirm_required
-@main.route('/stream/conversation/<int:conversation_id>')
-def conversation_stream(conversation_id):
-    try:
-        conversation = current_user.get_conversation(conversation_id)
-    except:
-        abort(403)
-    return Response(event_stream(conversation_id),
+@main.route('/stream/<username>')
+def stream(username):
+    if current_user.username == username:
+       res = Response(event_stream(username),
                           mimetype="text/event-stream")
-
-@login_required
-@confirm_required
-@main.route('/stream/conversations')
-def conversations_stream():
-    try:
-        conversation = current_user.get_conversation(conversation_id)
-    except:
-        abort(403)
-    return Response(event_stream(),
-                          mimetype="text/event-stream")
+    #add custom headers to fix timeout with nginx
+       res.headers['Cache-Control'] = 'no-cache'
+       res.headers['X-Accel-Buffering'] = 'no'
+       res.headers['Connection'] = 'keep-alive'
+    return res
+    abort(403)
 
 @main.route("/")
 def home():
@@ -123,7 +115,8 @@ def new_conversation():
         username_list = []
         for username in usernames:
             username_list.append(username)
-        current_user.create_conversation(username_list, content)
+        conversation_id = current_user.create_conversation(username_list, content)
+        push_message(conversation_id,content)
         return redirect(url_for("main.conversations"))
     return render_template("form.html", form=form)
 
@@ -151,9 +144,18 @@ def conversations():
         prev_url=prev_url,
     )
 
-def push_message(conversation_id,username,content):
-    message = "|".join([username,content])
-    red.publish('conversation_' + str(conversation_id),message) 
+def push_message(conversation_id,content):
+    ## push message to each user channel
+    users = current_user.get_conversation(conversation_id).users.all()
+    participants = []
+    for user in users: participants.append(user.username)
+
+    str_participants = ' '.join(participants)
+    redis_message= {"event": "new_messages", "from": current_user.username,
+        "conversation_id":conversation_id,"content":content,"participants":str_participants}
+
+    for user in users: red.publish(user.username,str(redis_message)) 
+
     
 @main.route("/conversation/<int:conversation_id>", methods=["GET", "POST"])
 @login_required
@@ -182,7 +184,7 @@ def conversation(conversation_id):
             content = form_send.content.data
             try:
                 current_user.add_message_conversation(conversation_id, content)
-                push_message(conversation_id,current_user.username,content)
+                push_message(conversation_id,content)
             except:
                 raise Exception("An error happened when user submited a message")
             return Response(status=204)

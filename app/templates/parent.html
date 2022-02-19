@@ -6,7 +6,7 @@
 {% endblock %}
 
 {% block title %}
-    {% if title %}{{ title }}{% else %} SimpleMessenger {% endif %}
+    {% if title %}{{ title }}{% else %} simpleMessenger {% endif %}
 {% endblock %}
 {% block navbar %}
 <body style="background-color: #7d9ac6;">
@@ -49,7 +49,6 @@
 </nav>
 {% endblock %}
 {% block content %}
-    <div class="container">
 	<link href="/static/styles.css" rel="stylesheet">
         {% with messages = get_flashed_messages() %}
         {% if messages %}
@@ -60,6 +59,5 @@
         {% endwith %}
         {# application content needs to be provided in the app_content block #}
 	{%block app_content%}{%endblock%}
-  </div>
 {% endblock %}
 </body>

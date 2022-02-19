@@ -3,20 +3,84 @@
 
 {% block app_content %}
 <div class="container">
-	<div class="well well-sm">
+<script>
+            function sse() {
+		var source = new EventSource("{{url_for('main.stream',username = current_user.username)}}");
+                source.onmessage = function(e) {
+			const json = e.data.replaceAll("'",'"');
+			const obj = JSON.parse(json);
+			const conversation_id = obj.conversation_id;
+			const from= obj.from;
+			const content = obj.content;
+			let conversation_to_update = document.querySelector('#conversation_'+ CSS.escape(conversation_id));
+			if (conversation_to_update  === null){
+				//Create a new element
+						console.log("conversation do not exists yet")
+			conversation_to_update = document.createElement("div");
+			conversation_to_update.setAttribute("class","well well-sm");
+			conversation_to_update.setAttribute("id","conversation_"+conversation_id);
+
+			const participants =  document.createElement("span");
+			participants.setAttribute("id","participants");
+			conversation_to_update.appendChild(participants);
+
+			const link_to_conversation =  document.createElement("a");
+			link_to_conversation.setAttribute("id","link_to_conversation");
+			link_to_conversation.setAttribute("href","/conversation/"+conversation_id);
+			conversation_to_update.appendChild(link_to_conversation);
+
+			const message = document.createElement("div");
+			message.setAttribute("class","well well-sm");
+			message.setAttribute("id","conversation_"+conversation_id);
+			link_to_conversation.appendChild(message);
+
+			const fromNode = document.createElement("span");
+			fromNode.setAttribute("id","from");
+
+			const timestampNode = document.createElement("small");
+			timestampNode.setAttribute("id","timestamp");
+			timestampNode.setAttribute("style","float:right;");
+
+			const messageNode = document.createElement("p");
+			messageNode.setAttribute("id","message_content");
+
+			message.appendChild(fromNode);
+			message.appendChild(timestampNode);
+			message.appendChild(messageNode);
+			};
+					// span username, small timestamp p message_content
+		//	document.querySelect("conversations").appendChild(conversation_to_update);
+			const updated_conversation = conversation_to_update.cloneNode(true);
+			updated_conversation.querySelector('#participants').innerText = "Participants: " + obj.participants
+			updated_conversation.querySelector('#message_content').innerText = obj.content;
+			updated_conversation.querySelector('#timestamp').innerText = moment().format('LLL');
+			updated_conversation.querySelector('#from').innerText = "From: " + obj.from;
+			updated_conversation.setAttribute('style', 'background-color:LightCoral;')
+			const last_conversation = document.querySelector('#conversations').firstElementChild;
+			document.querySelector('#conversations').insertBefore(updated_conversation,last_conversation);
+			conversation_to_update.remove();
+				// obj.username, conversation_id,content,event,participants.
+
+                };
+            }
+		sse();
+
+</script>
+
+	<div class="well well-sm" id="conversations">
 	{%for conversation in conversations%}
-	<div class="well well-sm">
-	Participants: {%for user in conversation.users %}
+	<div class="well well-sm" id="conversation_{{conversation.id}}">
+		<span id="participants">Participants: {%for user in conversation.users %}
 				{%if current_user.username != user.username%}
 					{{user.username}}
 				{%else%} me
-				{%endif%} 
+				{%endif%} </span>
 		{%endfor%}
-	<a href ="{{url_for('main.conversation',conversation_id = conversation.id)}}">
-	<div class="well well-sm" style="background-color: #ffffff;">
-		 From: {{conversation.messages.first().sender.username}}
-			<small style="float: right;"> {{moment(conversation.timestamp).format('LLL')}}</small>
-			<p> {{conversation.messages.first().content}}</p>
+	<a href ="{{url_for('main.conversation',conversation_id = conversation.id)}}" id="link_to_conversation">
+	<div class="well well-sm" style="background-color: #ffffff;",id="message">
+		<span id="from"> From: {{conversation.messages.first().sender.username}} </span>
+			<small style="float: right;" id="timestamp"> {{moment(conversation.timestamp).format('LLL')}}</small>
+			<p id="message_content">{{conversation.messages.first().content}}</p>
 	</div>
 	</a>
 	</div>

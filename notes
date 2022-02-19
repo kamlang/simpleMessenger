@@ -26,7 +26,6 @@ give the possiblity to send a message in a conversation (be carefull to validati
 remove welcom page go directly to login done
 
 about conversation:
-
 check socketio 
 
 stream pour les converesations notification ???
@@ -35,6 +34,7 @@ handle user disconnection ?
 
 change the way registration is handled. don't log user in to confirm account
 changing loggin implementation so it's clean
+
 give the possibility to leave a group.
 give the ability to remove a message.
 auto update discussion and conversation
@@ -45,7 +45,6 @@ redis ssl
 
 validate url parameters
 maybe with werkzeug
-
 
 validating password with regex.
 setup email messages
