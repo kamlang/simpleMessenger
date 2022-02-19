@@ -2,12 +2,11 @@
 {% import 'bootstrap/wtf.html' as wtf %}
 
 {% block app_content %}
-<div class="container">
 	<div class="well well-sm">
 		<small> You can use the field below to add other users to the conversation, if many separate username with space.</small>
-            {{ wtf.quick_form(form_add) }}
+		{{ wtf.quick_form(form_add) }}
 	</div>
-<div class="well well-sm">
+<div class="well well-sm" id="conversation_container">
 Participant: {%for user in users %}
 			{%if current_user.username != user.username%}
 				{{user.username}}
@@ -17,15 +16,82 @@ Participant: {%for user in users %}
 	{%endfor%}
 	<span style="float: right;">Admin: {{ admin }}</span>
 	{%for message in messages %}
-	<div class="well well-sm" style="background-color: #ffffff;">
-	 From: {{message.sender.username}}
-		<small style="float: right;"> {{moment(conversation.timestamp).format('LLL')}}</small>
-			<p> {{message.content}}</p>
+	<div class="well well-sm" id="message_container" style="background-color: #ffffff;">
+		<span id="username">From: {{message.sender.username}}</span>
+		<small style="float: right;" id="timestamp"> {{moment(message.timestamp).format('LLL')}}</small>
+			<p id="message_content"> {{message.content}}</p>
 	</div>
 	{%endfor%}
 	{%if prev_url %}<a href={{prev_url}}>Previous</a>{%endif%}
 		{%if next_url %}<a href={{next_url}}>Next</a>{%endif%}
-            {{ wtf.quick_form(form_send) }}
+           	</div>
+		
+	<div class="well well-sm" id="reply_container">
+		 {{ wtf.quick_form(form_send)}}
+	 	{{ form_send.csrf_token() }}
+	 	<button type="button" id="send_reply">Send !</button> 
 	</div>
-	</div>
+	
+ 	<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+	<script>
+
+let options = {
+  root: document.querySelector('#conversation_container'),
+  rootMargin: '0px',
+  threshold: 1.0
+}
+
+let callback = (entries, observer) => {
+  entries.forEach(entry => {
+    // Each entry describes an intersection change for one observed
+    // target element:
+    //   entry.boundingClientRect
+       console.log(entry.boundingClientRect)
+    //   entry.intersectionRatio
+    //   entry.intersectionRect
+    //   entry.isIntersecting
+       console.log(entry.isIntersecting)
+    //   entry.rootBounds
+    //   entry.target
+    //   entry.time
+  });
+};
+let observer = new IntersectionObserver(callback, options);
+
+let target = document.querySelector('#message_container');
+observer.observe(target);
+
+            function sse() {
+		var source = new EventSource("{{url_for('main.conversation_stream',conversation_id = conversation.id)}}");
+                source.onmessage = function(e) {
+		    let parentElement = document.getElementById('conversation_container');
+		    let last_message = document.getElementById('message_container');
+		    let new_message = last_message.cloneNode(true);
+		    let myArray = e.data.split("|");
+		    let username = myArray[0];
+		    let content = myArray.slice(1,);
+		    let timestampNode = new_message.querySelector("#timestamp");
+		    let usernameNode = new_message.querySelector("#username");
+		    let contentNode = new_message.querySelector("#message_content");
+		    timestampNode.innerText = moment().format('LLL');
+		    usernameNode.innerText = "From: "+ username;
+		    contentNode.innerText = content;
+		    parentElement.insertBefore(new_message,last_message);
+                };
+            }
+		sse();
+		$('#send_reply').click(function(e){
+		$.post("{{url_for('main.conversation',conversation_id = conversation.id)}}", {
+		'content': $('#content').val(),'csrf_token' : $('#csrf_token').val()});
+					$('#content').val('');
+				});
+		
+		$('#reply_container').keyup(function(e){
+		var code = e.key;
+		if(code==="Enter") {
+		$.post("{{url_for('main.conversation',conversation_id = conversation.id)}}", {
+		'content': $('#content').val(),'csrf_token' : $('#csrf_token').val()});
+								$('#content').val('');}
+				});
+	</script>
 {% endblock %}    

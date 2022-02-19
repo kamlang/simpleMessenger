@@ -7,7 +7,6 @@ import os
 from datetime import datetime
 from app import login_manager
 
-
 class Role(db.Model):
     __tablename__ = "roles"
     id = db.Column(db.Integer(), primary_key=True)
@@ -105,6 +104,9 @@ class User(db.Model, UserMixin):
                 if not user in conversation.users.all():
                     conversation.users.append(user)
                     db.session.commit()
+        else:
+            raise Exception("Only admin of a conversation can add a user.")
+
 
     def add_message_conversation(self, conversation_id, content):
         conversation = Conversation.query.get(conversation_id)
@@ -113,6 +115,8 @@ class User(db.Model, UserMixin):
             conversation.timestamp = datetime.utcnow()
             conversation.messages.append(message)
             db.session.commit()
+        else:
+            raise Exception("Only participant of a conversation can add a message.")
 
     def get_conversation(self, conversation_id):
         conversation = Conversation.query.get(conversation_id)

@@ -8,6 +8,7 @@ from flask import (
     session,
     g,
     abort,
+    Response,
 )
 from flask_login import login_user, current_user, logout_user, login_required
 from app.models import User, Role
@@ -21,10 +22,13 @@ from functools import wraps
 from werkzeug.urls import url_parse
 from datetime import datetime
 from werkzeug.utils import secure_filename
+import redis
 import os
+import time
+
+red = redis.StrictRedis()
 
 ### Defining custom decorators:
-
 
 def confirm_required(viewFunc):
     @wraps(viewFunc)
@@ -36,9 +40,41 @@ def confirm_required(viewFunc):
 
     return is_confirmed
 
+### Event loop
+
+def event_stream(conversation_id=None):
+    pubsub = red.pubsub()
+    pubsub.subscribe('conversation_' + str(conversation_id))
+    # TODO: handle client disconnection.
+    # if user inactive ?
+    for message in pubsub.listen():
+        print (message)
+        if message['type']=='message':
+            yield 'data: %s\n\n' % message['data'].decode('utf-8')
 
 ### Defining view functions
 
+@login_required
+@confirm_required
+@main.route('/stream/conversation/<int:conversation_id>')
+def conversation_stream(conversation_id):
+    try:
+        conversation = current_user.get_conversation(conversation_id)
+    except:
+        abort(403)
+    return Response(event_stream(conversation_id),
+                          mimetype="text/event-stream")
+
+@login_required
+@confirm_required
+@main.route('/stream/conversations')
+def conversations_stream():
+    try:
+        conversation = current_user.get_conversation(conversation_id)
+    except:
+        abort(403)
+    return Response(event_stream(),
+                          mimetype="text/event-stream")
 
 @main.route("/")
 def home():
@@ -115,13 +151,22 @@ def conversations():
         prev_url=prev_url,
     )
 
-
+def push_message(conversation_id,username,content):
+    message = "|".join([username,content])
+    red.publish('conversation_' + str(conversation_id),message) 
+    
 @main.route("/conversation/<int:conversation_id>", methods=["GET", "POST"])
 @login_required
 @confirm_required
 def conversation(conversation_id):
-    form_send = sendReply()
     form_add = addUserConversation()
+    form_send = sendReply()
+    page = request.args.get("page", 1, type=int)
+    conversation = current_user.get_conversation(conversation_id)
+
+    if conversation is None:
+        abort(403)
+
     if form_add.validate_on_submit():
         usernames = form_add.usernames.data.split()
         username_list = []
@@ -130,54 +175,52 @@ def conversation(conversation_id):
         try:
             current_user.add_users_conversation(conversation_id, username_list)
         except:
-            flash("Only admin of a group can add a user.")
-        return redirect(url_for("main.conversation", conversation_id=conversation_id))
-    if form_send.validate_on_submit():
-        content = form_send.content.data
-        current_user.add_message_conversation(conversation_id, content)
+            flash("Only admin of a conversation can add a user.")
         return redirect(url_for("main.conversation", conversation_id=conversation_id))
 
-    page = request.args.get("page", 1, type=int)
-    try:
-        conversation = current_user.get_conversation(conversation_id)
-    except:
-        abort(404)
-    if not conversation is None:
-        users = conversation.users.all()
-        messages = conversation.messages.paginate(
-            page, current_app.config["POSTS_PER_PAGE"], False
+    if form_send.validate_on_submit():
+            content = form_send.content.data
+            try:
+                current_user.add_message_conversation(conversation_id, content)
+                push_message(conversation_id,current_user.username,content)
+            except:
+                raise Exception("An error happened when user submited a message")
+            return Response(status=204)
+
+    users = conversation.users.all()
+    messages = conversation.messages.paginate(
+    page, current_app.config["POSTS_PER_PAGE"], False
+    )
+    admin = conversation.admin.username
+    next_url = (
+    url_for(
+        "main.conversation",
+            conversation_id=conversation_id,
+            page=messages.next_num,
         )
-        admin = conversation.admin.username
-        next_url = (
-            url_for(
-                "main.conversation",
-                conversation_id=conversation_id,
-                page=messages.next_num,
-            )
-            if messages.has_next
-            else None
+        if messages.has_next
+        else None
+    )
+    prev_url = (
+        url_for(
+            "main.conversation",
+            conversation_id=conversation_id,
+            page=messages.prev_num,
         )
-        prev_url = (
-            url_for(
-                "main.conversation",
-                conversation_id=conversation_id,
-                page=messages.prev_num,
-            )
-            if messages.has_prev
-            else None
-        )
-        return render_template(
-            "display_conversation.html",
-            messages=messages.items,
-            users=users,
-            next_url=next_url,
-            prev_url=prev_url,
-            form_send=form_send,
-            form_add=form_add,
-            admin=admin,
-            conversation=conversation,
-        )
-    abort(403)
+        if messages.has_prev
+        else None
+    )
+    return render_template(
+        "display_conversation.html",
+        messages=messages.items,
+        users=users,
+        next_url=next_url,
+        prev_url=prev_url,
+        form_send=form_send,
+        form_add=form_add,
+        admin=admin,
+        conversation=conversation,
+    )
 
 
 @main.before_request

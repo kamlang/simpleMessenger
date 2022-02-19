@@ -22,7 +22,7 @@
       	<a href={{url_for('main.conversations' )}} class="nav-link">My conversations</a>
       </li>
       <li class="nav-item">
-    <a href="{{url_for('auth.logout')}}" class=nav-link">Logout</a>
+    <a href="{{url_for('auth.logout')}}" class="nav-link">Logout</a>
       </li>
       {%else%}
       <li class="nav-item">
@@ -34,7 +34,7 @@
       {%endif%}
       {% if current_user.is_role(role='Admin') %}
       <li class="nav-item">
-      	<a class="navlink "href={{url_for('restricted.showall')}}>Admin panel</a>
+      	<a class="nav-link" href="{{url_for('restricted.showall')}}">Admin panel</a>
       </li>
       {%endif%}
     </ul>
@@ -50,6 +50,7 @@
 {% endblock %}
 {% block content %}
     <div class="container">
+	<link href="/static/styles.css" rel="stylesheet">
         {% with messages = get_flashed_messages() %}
         {% if messages %}
             {% for message in messages %}

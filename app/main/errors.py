@@ -1,5 +1,6 @@
 from flask import render_template
 from app.main import main
+from app.models import db
 
 ### Adding error handler
 
@@ -16,6 +17,6 @@ def not_found_error(error):
 
 @main.app_errorhandler(500)
 def internal_error(error):
-    db.session.rollback()
+#    db.session.rollback()
     return render_template("500.html"), 500
 

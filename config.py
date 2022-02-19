@@ -15,7 +15,8 @@ class Config:
     MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD")
     MAIL_USERNAME = os.environ.get("MAIL_USERNAME")
     ADMINS = ["glgmsh@protonmail.com"]
-    POSTS_PER_PAGE = 5
+    POSTS_PER_PAGE = 10
+    REDIS_URL = "redis://localhost:6379"
 
 
 class DevelopmentConfig(Config):
