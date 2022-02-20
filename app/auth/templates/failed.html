@@ -1,7 +1,7 @@
-{% extends "parent.html" %} {% block contents %}
-<div class="container">
-	Hello {{ username }}, your account is not confimed yet.
-	Check you emails and use the confirmation link sent. Confirmation link are only valid during 1 hour. If needed you can get a new one
-	<a href={{url_for('auth.resend_token')}}>here</a>.
+{% extends "parent.html" %} {% block app_content %}
+<div class="well well-sm">
+	<a href={{url_for('auth.send_link',choice='confirmation')}}>Request a new account confimation link</a>.
+	<br>
+	<a href={{url_for('auth.send_link', choice='password_reset')}}>Request a password reset link</a>.
 </div>
 {% endblock %}    

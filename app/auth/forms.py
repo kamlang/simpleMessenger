@@ -20,7 +20,7 @@ from flask_wtf.file import FileField, FileRequired, FileAllowed
 from app.models import User
 
 
-class loginForm(FlaskForm):
+class login_form(FlaskForm):
     username = StringField(
         "Username", validators=[InputRequired(message="This field can not be empty")]
     )
@@ -31,7 +31,7 @@ class loginForm(FlaskForm):
     submit = SubmitField("Submit")
 
 
-class registerForm(FlaskForm):
+class register_form(FlaskForm):
     username = StringField(
         "Username",
         validators=[
@@ -59,18 +59,18 @@ class registerForm(FlaskForm):
 
     def validate_username(self, username):
         user = User.query.filter_by(username=username.data).first()
-        if user is not None:
+        if user is not None: 
             raise ValidationError("Please use a different username.")
 
 
-class passwordReset(FlaskForm):
-    username = StringField(
+class password_reset_confirmation(FlaskForm):
+    """  username = StringField(
         "Username",
         validators=[
             InputRequired(message="This field can not be empty"),
             Length(1, 48),
         ],
-    )
+    )"""
     password = PasswordField(
         "Password",
         validators=[
@@ -82,7 +82,7 @@ class passwordReset(FlaskForm):
     submit = SubmitField("Submit")
 
 
-class usernameReset(
+class confirm_username(
     FlaskForm
 ):  ##### After forgot password is pressed at login screen, asking for the username
     username = StringField(

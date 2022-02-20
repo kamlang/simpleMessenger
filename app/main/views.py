@@ -25,19 +25,6 @@ from werkzeug.utils import secure_filename
 from app import red
 import time
 
-
-### Defining custom decorators:
-
-def confirm_required(viewFunc):
-    @wraps(viewFunc)
-    def is_confirmed(*args, **kwargs):
-        if current_user.confirmed:
-            return viewFunc(*args, **kwargs)
-        flash("Current account has not been confirmed yet.")
-        return redirect(url_for("auth.logout"))
-
-    return is_confirmed
-
 ### Event loop
 
 def event_stream(username):
@@ -70,7 +57,6 @@ def home():
 
 
 @login_required
-@confirm_required
 @main.route('/stream/<username>')
 def stream(username):
     if current_user.username == username:
@@ -85,13 +71,11 @@ def stream(username):
 
 @main.route("/myprofile")
 @login_required
-@confirm_required
 def showprofile():
     return render_template("profile.html")
 
 @main.route("/edit_profile", methods=["GET", "POST"])
 @login_required
-@confirm_required
 def edit():
     form = editUser()
     if form.validate_on_submit():
@@ -109,7 +93,6 @@ def edit():
 
 @main.route("/create_conversation", methods=["GET", "POST"])
 @login_required
-@confirm_required
 def new_conversation():
     form = createConversation()
     if form.validate_on_submit():
@@ -126,7 +109,6 @@ def new_conversation():
 
 @main.route("/conversations")
 @login_required
-@confirm_required
 def conversations():
     page = request.args.get("page", 1, type=int)
     conversations = current_user.get_conversations(page)
@@ -151,7 +133,6 @@ def conversations():
     
 @main.route("/conversation/<int:conversation_id>", methods=["GET", "POST"])
 @login_required
-@confirm_required
 def conversation(conversation_id):
     form_add = addUserConversation()
     form_send = sendReply()

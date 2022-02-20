@@ -18,7 +18,7 @@ from werkzeug.utils import secure_filename
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 import os
 from app.models import User, Role
-from app.auth.forms import registerForm, loginForm, passwordReset, usernameReset
+from app.auth.forms import register_form, login_form, password_reset_confirmation, confirm_username
 from app.auth import auth
 from app import db
 from app.email import send_email
@@ -26,14 +26,12 @@ from app.email import send_email
 
 ###### Definig some custom decorator
 
-
 def unauthenticated_required(viewFunc):
     @wraps(viewFunc)
     def is_unauthenticated(*args, **kwargs):
         if current_user.is_anonymous:
             return viewFunc(*args, **kwargs)
         return redirect("/")
-
     return is_unauthenticated
 
 
@@ -42,13 +40,13 @@ def unauthenticated_required(viewFunc):
 @auth.route("/login", methods=["GET", "POST"])
 @unauthenticated_required
 def login():  ### Restrict to unauthenticate user
-    form = loginForm()
+    form = login_form()
     if form.validate_on_submit():
         username = request.form["username"]
         password = request.form["password"]
         user = User.query.filter_by(username=username).first()
         next_page = request.args.get("next")
-        if user is not None and user.verify_password(password):
+        if user is not None and user.verify_password(password) and user.confirmed == True:
             login_user(user, form.remember_me.data)
             if not next_page or url_parse(next_page).netloc != "":
                 return redirect(url_for("main.conversations"))
@@ -58,77 +56,6 @@ def login():  ### Restrict to unauthenticate user
             return redirect(url_for("main.conversations"))
     return render_template("form.html", form=form, form_name="Login")
 
-
-@auth.route("/register", methods=["GET", "POST"])  ### Restrict to unauthenticate user
-@unauthenticated_required
-def register():
-    form = registerForm()
-    if form.validate_on_submit():
-        username = request.form["username"]
-        password = request.form["password"]
-        email = request.form["email"]
-        user = User(username=username, password=password, email=email, role="User")
-        db.session.add(user)
-        db.session.commit()
-        send_token_confirm(user)
-        return redirect("/")
-    return render_template("form.html", form=form, form_name="Register")
-
-
-@auth.route("/reset/<token>", methods=["GET", "POST"])
-@unauthenticated_required
-def reset(token):
-    form = passwordReset()
-    if form.validate_on_submit():
-        new_password = request.form["password"]
-        username = request.form["username"]
-        user = User.query.filter_by(username=username).first() ## first ot 404 ?
-        if not user is None:
-            if user.confirm(token):
-                user.password = new_password
-                db.session.add(user)
-                db.session.commit()
-                flash("Password updated successfully.")
-            else:
-                flash(
-                    "Verification failed. Either the username is invalid or link as expired."
-                )
-        else:
-            flash("Username do not exists")
-        return redirect(url_for("auth.login"))
-    return render_template("form.html", form=form, form_name="Reset password")
-
-
-@auth.route("/reset_request", methods=["GET", "POST"])
-@unauthenticated_required
-def reset_request():
-    form = usernameReset()
-    if form.validate_on_submit():
-        username = request.form["username"]
-        user = User.query.filter_by(username=username).first()
-        if not user is None:
-            send_token_reset(user)
-    return render_template("form.html", form=form, form_name="Reset password")
-
-
-@auth.route("/confirm/<token>")
-@unauthenticated_required
-def confirm(token):
-    if current_user.confirm(token):
-        flash("You're account is now active")
-        return redirect(url_for("auth.showprofile"))
-    else:
-        return redirect("auth.registration_failed")
-
-
-@auth.route("/registration_failed")
-@unauthenticated_required
-def registration_failed():
-    if not current_user.confirmed:
-        return render_template("failed.html", username=current_user.username)
-    return redirect("/")
-
-
 @auth.route("/logout")
 @login_required
 def logout():
@@ -136,53 +63,106 @@ def logout():
     logout_user()
     return redirect("/")
 
-
-@auth.route("/resend_token")
-@login_required
-def resend_token():
-    if not current_user.confirmed:
-        send_token_confirm(current_user)
-    return redirect("/")
-
-
-def send_token_confirm(username):
-    token = generate_confirmation_token()
-    try:
-        send_email(
-            user.email,
-            "Confirm Your Account",
-            "/email/confirm",
-            username=user.username,
-            token=token,
-        )
-        flash("You're registered. Please check you emails.")
-    except Exception as e:
-        flash("Email was not sent")
+@auth.route("/register", methods=["GET", "POST"])  ### Restrict to unauthenticate user
+@unauthenticated_required
+def register():
+    form = register_form()
+    if form.validate_on_submit():
+        username = request.form["username"]
+        password = request.form["password"]
+        email = request.form["email"]
+        user = User(username=username, password=password, email=email, role="User")
+        db.session.add(user)
+        db.session.commit()
+        send_email_token('confirmation',username)
+        flash("Please check you emails and click on registration link.")
+        return redirect("/")
+    return render_template("form.html", form=form, form_name="Register")
 
 
-def send_token_reset(username):
-    token = generate_confirmation_token()
-    try:
-        send_email(
-            user.email,
-            "Password reset",
-            "/email/reset",
-            username=user.username,
-            token=token,
-        )
-        flash("An email has been sent to you.")
-    except Exception as e:
-        flash("Email was not sent")
-
-        def confirm(token):
-        s = Serializer(current_app.config["SECRET_KEY"])
+@auth.route("/password_reset/<token>", methods=["GET", "POST"])
+@unauthenticated_required
+def reset(token):
+    form = password_reset_confirmation()
+    if form.validate_on_submit():
+        new_password = request.form["password"]
         try:
-            data = s.loads(token)
+            username = get_username_from_token(token)
         except:
-            return False
-        user_id = data.get("confirm")
-        user = User.query.get(user_id)
+            flash(
+                "Verification failed. Either the username is invalid or link as expired."
+            )
+            return redirect(url_for('auth.failed'))
+        user = User.query.filter_by(username=username).first_or_404()
+        user.password = new_password
+        db.session.add(user)
+        db.session.commit()
+        flash("Password updated successfully.")
+        return redirect(url_for("auth.login"))
+    return render_template("form.html", form=form, form_name="Reset password")
+
+@auth.route("/confirm/<token>")
+@unauthenticated_required
+def confirm(token):
+    try:
+        username = get_username_from_token(token)
+    except:
+        flash(
+                "Verification failed. Either the username is invalid or link as expired."
+            )
+        return redirect(url_for('auth.failed'))
+    user = User.query.filter_by(username=username).first_or_404()
+    if not user.confirmed:
         user.confirmed = True
         db.session.add(user)
         db.session.commit()
-        return True
+        flash("Your account has been activated successfully.")
+    return redirect(url_for("auth.login"))
+
+
+@auth.route("/send_link/<choice>", methods=["GET", "POST"])
+@unauthenticated_required
+def send_link(choice):
+    form = confirm_username()
+    form_name = {'password_reset':'Reset password','confirmation':'Resend confirmation link'}
+    if form.validate_on_submit():
+        username = request.form["username"]
+        user = User.query.filter_by(username=username).first_or_404()
+        send_email_token(choice,username)
+        return redirect(url_for("auth.login"))
+    return render_template("form.html", form=form, form_name=form_name[choice])
+
+
+@auth.route("/problem_to_login")
+@unauthenticated_required
+def failed():
+    return render_template("failed.html")
+
+def get_username_from_token(token):
+    s = Serializer(current_app.config["SECRET_KEY"])
+    try:
+        data = s.loads(token)
+    except:
+        raise Exception("Token is invalid.")
+    return data.get("username")
+
+def generate_confirmation_token(username, expiration=3600):
+    s = Serializer(current_app.config["SECRET_KEY"], expiration)
+    return s.dumps({"username": username})
+
+email_argument = {
+    'confirmation': { 'subject': 'Confirm your Account', 'template':'/email/confirm' },
+    'password_reset': { 'subject': 'Password reset', 'template':'/email/reset' } 
+    }
+
+def send_email_token(context,username):
+    user = User.query.filter_by(username=username).first_or_404()
+    token = generate_confirmation_token(username)
+    send_email(
+        user.email,
+        email_argument[context]['subject'],
+        email_argument[context]['template'],
+        username=username,
+        token=token,
+    )
+    flash("Please check your emails and click on the link provided.")
