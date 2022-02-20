@@ -1,11 +1,10 @@
-from . import db, login_manager
 from flask_login import UserMixin, AnonymousUserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from flask import current_app
 import os
 from datetime import datetime
-from app import login_manager
+from app import db,login_manager
 
 class Role(db.Model):
     __tablename__ = "roles"
@@ -210,9 +209,7 @@ class AnonymousUser(AnonymousUserMixin):
     def is_role(self, role):
         return False
 
-
 login_manager.anonymous_user = AnonymousUser
-
 
 @login_manager.user_loader
 def load_user(id):

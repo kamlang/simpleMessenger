@@ -11,7 +11,7 @@
 	{%if current_user.about_me %}About me: {{current_user.about_me }}{%else%}No description available{%endif%}
 	</p>
 	<small> last seen on: {{current_user.last_seen_clean()}}</small>
-	<small><a href={{url_for('main.edit',username=current_user.username)}}>Edit</a></small>
+	<small><a href={{url_for('main.edit')}}>Edit</a></small>
 </div>
 </div>
 </div>

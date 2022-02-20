@@ -22,11 +22,9 @@ from functools import wraps
 from werkzeug.urls import url_parse
 from datetime import datetime
 from werkzeug.utils import secure_filename
-import redis
-import os
+from app import red
 import time
 
-red = redis.StrictRedis()
 
 ### Defining custom decorators:
 
@@ -52,7 +50,24 @@ def event_stream(username):
         if message['type']=='message':
             yield 'data: %s\n\n' % message['data'].decode('utf-8')
 
+def push_message(conversation_id,content):
+    ## push message to each user channel
+    users = current_user.get_conversation(conversation_id).users.all()
+
+    participants = ' '.join([user.username for user in users])
+    redis_message= {"event": "new_messages", "from": current_user.username,
+        "conversation_id":conversation_id,"content":content,"participants":participants}
+
+    [ red.publish(user.username,str(redis_message)) for user in users ]
+
 ### Defining view functions
+
+@main.route("/")
+def home():
+    if current_user.is_authenticated:
+        return redirect(url_for('main.conversations'))
+    return redirect(url_for("auth.login"))
+
 
 @login_required
 @confirm_required
@@ -65,43 +80,31 @@ def stream(username):
        res.headers['Cache-Control'] = 'no-cache'
        res.headers['X-Accel-Buffering'] = 'no'
        res.headers['Connection'] = 'keep-alive'
-    return res
+       return res
     abort(403)
 
-@main.route("/")
-def home():
-    if current_user.is_authenticated:
-        return redirect(url_for('main.conversations'))
-    return redirect(url_for("auth.login"))
-
-@main.route("/profile")
+@main.route("/myprofile")
 @login_required
 @confirm_required
 def showprofile():
     return render_template("profile.html")
 
-
-@main.route("/edit/<string:username>", methods=["GET", "POST"])
+@main.route("/edit_profile", methods=["GET", "POST"])
 @login_required
 @confirm_required
-def edit(username):
+def edit():
     form = editUser()
-    if current_user.username != username:
-        abort(403)
     if form.validate_on_submit():
-        user = User.query.filter_by(username=current_user.username).first()
         if form.about_me.data:
-            user.about_me = form.about_me.data
-            db.session.add(user)
+            current_user.about_me = form.about_me.data
+            db.session.add(current_user)
             db.session.commit()
         if form.avatar.data:
-            user.set_avatar(form.avatar.data)
-            db.session.add(user)
+            current_user.set_avatar(form.avatar.data)
+            db.session.add(current_user)
             db.session.commit()
         return redirect(url_for("main.showprofile"))
     return render_template("form.html", form=form, form_name="Edit your profile")
-
-    ### save path to userdb
 
 
 @main.route("/create_conversation", methods=["GET", "POST"])
@@ -144,17 +147,6 @@ def conversations():
         prev_url=prev_url,
     )
 
-def push_message(conversation_id,content):
-    ## push message to each user channel
-    users = current_user.get_conversation(conversation_id).users.all()
-    participants = []
-    for user in users: participants.append(user.username)
-
-    str_participants = ' '.join(participants)
-    redis_message= {"event": "new_messages", "from": current_user.username,
-        "conversation_id":conversation_id,"content":content,"participants":str_participants}
-
-    for user in users: red.publish(user.username,str(redis_message)) 
 
     
 @main.route("/conversation/<int:conversation_id>", methods=["GET", "POST"])
