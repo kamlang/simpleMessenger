@@ -10,20 +10,19 @@ from flask import (
     abort,
 )
 from flask_login import login_user, current_user, logout_user, login_required
-from app.models import User, Role
-from app.auth.forms import registerForm, loginForm, passwordReset, usernameReset
-from app.auth import auth
-from app import db
-from app.email import send_email
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from werkzeug.urls import url_parse
 from datetime import datetime
 from werkzeug.utils import secure_filename
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 import os
+from app.models import User, Role
+from app.auth.forms import registerForm, loginForm, passwordReset, usernameReset
+from app.auth import auth
+from app import db
+from app.email import send_email
 
-errorMessage = "An error happened!"
-successMessage = "Operation succeed !"
 
 ###### Definig some custom decorator
 
@@ -83,7 +82,7 @@ def reset(token):
     if form.validate_on_submit():
         new_password = request.form["password"]
         username = request.form["username"]
-        user = User.query.filter_by(username=username).first()
+        user = User.query.filter_by(username=username).first() ## first ot 404 ?
         if not user is None:
             if user.confirm(token):
                 user.password = new_password
@@ -113,18 +112,17 @@ def reset_request():
 
 
 @auth.route("/confirm/<token>")
-@login_required
+@unauthenticated_required
 def confirm(token):
     if current_user.confirm(token):
         flash("You're account is now active")
         return redirect(url_for("auth.showprofile"))
     else:
-        flash(errorMessage)
         return redirect("auth.registration_failed")
 
 
 @auth.route("/registration_failed")
-@login_required
+@unauthenticated_required
 def registration_failed():
     if not current_user.confirmed:
         return render_template("failed.html", username=current_user.username)
@@ -147,8 +145,8 @@ def resend_token():
     return redirect("/")
 
 
-def send_token_confirm(user):
-    token = user.generate_confirmation_token()
+def send_token_confirm(username):
+    token = generate_confirmation_token()
     try:
         send_email(
             user.email,
@@ -162,8 +160,8 @@ def send_token_confirm(user):
         flash("Email was not sent")
 
 
-def send_token_reset(user):
-    token = user.generate_confirmation_token()
+def send_token_reset(username):
+    token = generate_confirmation_token()
     try:
         send_email(
             user.email,
@@ -175,3 +173,16 @@ def send_token_reset(user):
         flash("An email has been sent to you.")
     except Exception as e:
         flash("Email was not sent")
+
+        def confirm(token):
+        s = Serializer(current_app.config["SECRET_KEY"])
+        try:
+            data = s.loads(token)
+        except:
+            return False
+        user_id = data.get("confirm")
+        user = User.query.get(user_id)
+        user.confirmed = True
+        db.session.add(user)
+        db.session.commit()
+        return True
