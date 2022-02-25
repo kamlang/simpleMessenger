@@ -184,7 +184,7 @@ class User(db.Model, UserMixin):
             flash("Please provide a valid image file")
 
     def get_avatar_path(self):
-        return os.path.join("../static/avatars/", self.avatar_name)
+        return os.path.join("../static/avatars/", str(self.avatar_name))
 
 
 class AnonymousUser(AnonymousUserMixin):

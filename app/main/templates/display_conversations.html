@@ -2,7 +2,34 @@
 {% import 'bootstrap/wtf.html' as wtf %}
 
 {% block app_content %}
-<div class="container">
+
+	<div class="well well-sm" id="conversations">
+	{%for conversation in conversations%}
+	<div class="well well-sm" id="conversation_{{conversation.id}}">
+		{% set last_message = conversation.messages.first() %}
+		<span id="participants">Participants: {%for user in conversation.users %}
+				{%if current_user.username != user.username%}
+				<span id="participant">{{user.username}} </span>
+				{%else%}<span id="participant"> Me </span>
+				{%endif%} 
+		{%endfor%}</span>
+	<a href ="{{url_for('main.conversation',conversation_id = conversation.id)}}" id="link_to_conversation">
+	<div class="well well-sm" style="background-color: #ffffff;" id="message_container">
+		<span id="from"> From: {{last_message.sender.username}} </span>
+		<img id="avatar_message" src="/static/avatars/{{last_message.sender.avatar_name}}" onerror="this.src='/static/avatars/default.png'">
+			<small style="float: right;" id="timestamp"> {{moment(conversation.timestamp).format('LLL')}}</small>
+			<p id="message_content">{{conversation.messages.first().content}}</p>
+	</div>
+	</a>
+	</div>
+	{%endfor%}
+	{%if prev_url %}<a href={{prev_url}}>Previous</a>{%endif%}
+		{%if next_url %}<a href={{next_url}}>Next</a>{%endif%}
+		<hr>
+		<a href="{{url_for('main.new_conversation')}}">Start a new conversation</a>
+	</div>
+	<script src"https://getbootstrap.com/docs/4.0/assets/js/vendor/popper.min.js"></script>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 <script>
             function sse() {
 		var source = new EventSource("{{url_for('main.stream',username = current_user.username)}}");
@@ -26,7 +53,7 @@
 
 			const link_to_conversation =  document.createElement("a");
 			link_to_conversation.setAttribute("id","link_to_conversation");
-			link_to_conversation.setAttribute("href","/conversation/"+conversation_id);
+			link_to_conversation.setAttribute("href","message_container");
 			conversation_to_update.appendChild(link_to_conversation);
 
 			const message = document.createElement("div");
@@ -64,34 +91,20 @@
                 };
             }
 		sse();
+		var all_participant_elements  =  document.querySelectorAll('#participant');
+		all_participant_elements.forEach(function(participant_element) {
+			$(participant_element).hover(function(){
+					popup = $(participant_element).popover({
+							title:'test', content:'test',container:participant_element,
+							delay: { "show":0, "hide": 100 }});
+						popup.popover('show');
+					console.log(participant_element.innerText)},function() {
+							popup.popover('destroy');
+						})
 
+
+	});
 </script>
-
-	<div class="well well-sm" id="conversations">
-	{%for conversation in conversations%}
-	<div class="well well-sm" id="conversation_{{conversation.id}}">
-		<span id="participants">Participants: {%for user in conversation.users %}
-				{%if current_user.username != user.username%}
-					{{user.username}}
-				{%else%} me
-				{%endif%} </span>
-		{%endfor%}
-	<a href ="{{url_for('main.conversation',conversation_id = conversation.id)}}" id="link_to_conversation">
-	<div class="well well-sm" style="background-color: #ffffff;",id="message">
-		<span id="from"> From: {{conversation.messages.first().sender.username}} </span>
-			<small style="float: right;" id="timestamp"> {{moment(conversation.timestamp).format('LLL')}}</small>
-			<p id="message_content">{{conversation.messages.first().content}}</p>
-	</div>
-	</a>
-	</div>
-	{%endfor%}
-	{%if prev_url %}<a href={{prev_url}}>Previous</a>{%endif%}
-		{%if next_url %}<a href={{next_url}}>Next</a>{%endif%}
-		<hr>
-		<a href="{{url_for('main.new_conversation')}}">Start a new conversation</a>
-	</div>
-	</a>
-	</div>
 {% endblock %}    
 
 

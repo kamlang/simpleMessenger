@@ -6,18 +6,21 @@
 		<small> You can use the field below to add other users to the conversation, if many separate username with space.</small>
 		{{ wtf.quick_form(form_add) }}
 	</div>
-<div class="well well-sm" id="conversation_container">
-Participant: {%for user in users %}
+	<div class="well well-sm" id="messages">
+	<span id='participants'>Participant: {%for user in users %}
 			{%if current_user.username != user.username%}
 				{{user.username}}
 			{%else%} me
 			{%endif%} 
 
-	{%endfor%}
+	{%endfor%} </span>
 	<span style="float: right;">Admin: {{ admin }}</span>
+<div class="well well-sm" id="conversation_container">
+
 	{%for message in messages %}
 	<div class="well well-sm" id="message_container" style="background-color: #ffffff;">
 		<span id="from">From: {{message.sender.username}}</span>
+			<img id="avatar_message" src="/static/avatars/{{message.sender.avatar_name}}" onerror="this.src='/static/avatars/default.png'">
 		<small style="float: right;" id="timestamp"> {{moment(message.timestamp).format('LLL')}}</small>
 			<p id="message_content"> {{message.content}}</p>
 	</div>
@@ -25,13 +28,18 @@ Participant: {%for user in users %}
 	{%if prev_url %}<a href={{prev_url}}>Previous</a>{%endif%}
 		{%if next_url %}<a href={{next_url}}>Next</a>{%endif%}
            	</div>
-		
-	<div class="well well-sm" id="reply_container">
-		 {{ wtf.quick_form(form_send)}}
+
+	<span id="reply_container">
+ 		{{ wtf.quick_form(form_send)}}
 	 	{{ form_send.csrf_token() }}
 	 	<button type="button" id="send_reply">Send !</button> 
+		</span>
+           	</div>
+		
+		
 	</div>
 	
+	<script src"https://getbootstrap.com/docs/4.0/assets/js/vendor/popper.min.js"></script>
  	<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 	<script>
 

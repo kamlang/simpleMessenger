@@ -60,8 +60,53 @@ margin-right:auto;
 max-width:350px;
 }
 
+
+#conversations,#messages
+{
+padding:5px;
+}
+
 #conversation_container
 {
 max-height:300px;
 overflow:auto;
 }
+
+#message_container
+{
+word-break: break-all;
+border-radius: 10px;
+margin:5px;
+color:#666666;
+}
+
+div[id*="conversation_"]
+{
+color:white;
+background-color:LightSteelBlue;
+margin:5px;
+padding:5px;
+border-radius: 10px;
+}
+
+#avatar_message
+{
+border-radius: 10%;	
+width: 48px;
+height: 48px;
+float: left;
+margin-right: 10px;
+margin-top:2px;
+}
+
+#link_to_conversation
+{
+text-decoration:none;
+}
+
+.popover-content,.popover-title
+
+{
+color:#666666;
+}
+

@@ -24,20 +24,20 @@ implement private message done
 display messages when clikcking on conversations done
 give the possiblity to send a message in a conversation (be carefull to validation) done
 remove welcom page go directly to login done
+change the way registration is handled. don't log user in to confirm account done
+auto update discussion and conversation done
 
 about conversation:
 check socketio 
+event sqlalchemy ?
 
 stream pour les converesations notification ???
 infinite scroll json ?
 handle user disconnection ?
 
-change the way registration is handled. don't log user in to confirm account
-changing loggin implementation so it's clean
 
 give the possibility to leave a group.
 give the ability to remove a message.
-auto update discussion and conversation
 add avatars in conversation
 fix admin panel especially user edit function
 uuid for conversation

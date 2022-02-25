@@ -1,13 +1,9 @@
 {% extends 'bootstrap/base.html' %}
 
-{% block scripts %}
-    {{ super() }}
-    {{ moment.include_moment() }}
-{% endblock %}
-
 {% block title %}
     {% if title %}{{ title }}{% else %} simpleMessenger {% endif %}
 {% endblock %}
+
 {% block navbar %}
 <body style="background-color: #7d9ac6;">
 <nav class="navbar navbar-default">
@@ -48,6 +44,7 @@
   </div>
 </nav>
 {% endblock %}
+
 {% block content %}
 	<link href="/static/styles.css" rel="stylesheet">
         {% with messages = get_flashed_messages() %}
@@ -60,4 +57,10 @@
         {# application content needs to be provided in the app_content block #}
 	{%block app_content%}{%endblock%}
 {% endblock %}
+
 </body>
+
+{% block scripts %}
+    {{ super() }}
+    {{ moment.include_moment() }}
+{% endblock %}
