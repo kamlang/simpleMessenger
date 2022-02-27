@@ -20,14 +20,14 @@ from flask_wtf.file import FileField, FileRequired, FileAllowed
 from app.models import User
 
 class editUser(FlaskForm):
-    about_me = TextAreaField(
+    avatar = FileField("", validators=[FileAllowed(["jpg", "png"], "Images only!")])
+    about_me = StringField(
         "About me",
         validators=[
             Length(0, 140, message="Description should be shorter than 140 chars.")
         ],
-        render_kw={"rows": 4, "cols": 30},
+        render_kw={"rows": 1, "cols": 30},
     )
-    avatar = FileField("", validators=[FileAllowed(["jpg", "png"], "Images only!")])
     submit = SubmitField("Submit")
 
 

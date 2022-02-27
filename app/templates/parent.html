@@ -12,9 +12,6 @@
     <ul class="nav navbar-nav navbar-left">
 {% if current_user.is_authenticated %}
       <li class="nav-item">
-      	<a href={{url_for('main.showprofile' )}} class="nav-link">My profile</a>
-      </li>
-      <li class="nav-item">
       	<a href={{url_for('main.conversations' )}} class="nav-link">My conversations</a>
       </li>
       <li class="nav-item">
@@ -54,6 +51,14 @@
             {% endfor %}
         {% endif %}
         {% endwith %}
+	<script>
+		async function get_user_info(username) {
+		let response = await fetch('/getUserInfo/'+username,
+				{ headers:{'X-CSRFToken': csrf_token }})
+				let json = await response.json()
+				return json
+		}
+	</script>
         {# application content needs to be provided in the app_content block #}
 	{%block app_content%}{%endblock%}
 {% endblock %}

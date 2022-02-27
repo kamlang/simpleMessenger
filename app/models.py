@@ -81,7 +81,7 @@ class User(db.Model, UserMixin):
         lazy="dynamic",
     )
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
-    avatar_name = db.Column(db.String(32))
+    avatar_name = db.Column(db.String(32),default="default.png")
 
     def create_conversation(self, usernames, content):
         c = Conversation()

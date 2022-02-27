@@ -2,21 +2,28 @@
 {% import 'bootstrap/wtf.html' as wtf %}
 
 {% block app_content %}
+	{%set _csrf_token = csrf_token()%}
+	<div class="well well-sm" id="status">
+		{{ wtf.quick_form(form,form_type="inline",id="profile_form") }}
+	    <span id="current_status"><i>  {{ current_user.about_me }}</i> </span>
+	    <img title="Click to change your avatar!" id="current_avatar" src="/static/avatars/{{current_user.avatar_name}}" onerror="this.src='/static/avatars/default.png'">
 
+	</div>
 	<div class="well well-sm" id="conversations">
 	{%for conversation in conversations%}
 	<div class="well well-sm" id="conversation_{{conversation.id}}">
 		{% set last_message = conversation.messages.first() %}
 		<span id="participants">Participants: {%for user in conversation.users %}
 				{%if current_user.username != user.username%}
-				<span id="participant">{{user.username}} </span>
-				{%else%}<span id="participant"> Me </span>
+				<span id="participant">{{user.username}}
+				</span>
+				{%else%} Me
 				{%endif%} 
 		{%endfor%}</span>
 	<a href ="{{url_for('main.conversation',conversation_id = conversation.id)}}" id="link_to_conversation">
 	<div class="well well-sm" style="background-color: #ffffff;" id="message_container">
 		<span id="from"> From: {{last_message.sender.username}} </span>
-		<img id="avatar_message" src="/static/avatars/{{last_message.sender.avatar_name}}" onerror="this.src='/static/avatars/default.png'">
+		<img id="avatar_message" src="/static/avatars/{{ last_message.sender.avatar_name}}" onerror="this.src='/static/avatars/default.png'">
 			<small style="float: right;" id="timestamp"> {{moment(conversation.timestamp).format('LLL')}}</small>
 			<p id="message_content">{{conversation.messages.first().content}}</p>
 	</div>
@@ -28,9 +35,32 @@
 		<hr>
 		<a href="{{url_for('main.new_conversation')}}">Start a new conversation</a>
 	</div>
-	<script src"https://getbootstrap.com/docs/4.0/assets/js/vendor/popper.min.js"></script>
+	<script src"//getbootstrap.com/docs/4.0/assets/js/vendor/popper.min.js"></script>
 	<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 <script>
+
+	$('#current_avatar').click(function(){ $('#avatar').trigger('click'); });
+	let about_me = document.querySelector('#about_me')
+	about_me.setAttribute("title","You can change your status here!")
+	let current_status = document.querySelector('#current_status')
+	let status_form = document.querySelector('#profile_form')
+	about_me.addEventListener("focusin", function() {
+			about_me.style.opacity='1'
+			current_status.style.opacity='0'})
+	about_me.addEventListener("focusout", function() {
+			about_me.style.opacity='0.5'
+			status_form.reset()
+			current_status.style.opacity='1'})
+	about_me.addEventListener("keypress",function(event) {
+			if (event.keyCode == 13) {
+			$('#submit').trigger('click')}
+		})
+	let avatar = document.querySelector('#avatar')
+	avatar.addEventListener("change", function() {
+			$('#submit').trigger('click')
+		})
+
+	var csrf_token = "{{ csrf_token() }}";
             function sse() {
 		var source = new EventSource("{{url_for('main.stream',username = current_user.username)}}");
                 source.onmessage = function(e) {
@@ -42,7 +72,6 @@
 			let conversation_to_update = document.querySelector('#conversation_'+ CSS.escape(conversation_id));
 			if (conversation_to_update  === null){
 				//Create a new element
-						console.log("conversation do not exists yet")
 			conversation_to_update = document.createElement("div");
 			conversation_to_update.setAttribute("class","well well-sm");
 			conversation_to_update.setAttribute("id","conversation_"+conversation_id);
@@ -79,6 +108,7 @@
 		//	document.querySelect("conversations").appendChild(conversation_to_update);
 			const updated_conversation = conversation_to_update.cloneNode(true);
 			updated_conversation.querySelector('#participants').innerText = "Participants: " + obj.participants
+			updated_conversation.querySelector('#avatar_message').setAttribute("src","/static/avatars/"+ obj.avatar_name)
 			updated_conversation.querySelector('#message_content').innerText = obj.content;
 			updated_conversation.querySelector('#timestamp').innerText = moment().format('LLL');
 			updated_conversation.querySelector('#from').innerText = "From: " + obj.from;
@@ -90,20 +120,37 @@
 
                 };
             }
-		sse();
-		var all_participant_elements  =  document.querySelectorAll('#participant');
-		all_participant_elements.forEach(function(participant_element) {
-			$(participant_element).hover(function(){
+	sse();
+
+
+	var all_participant_elements  =  document.querySelectorAll('#participant');
+	var popup = null	
+	var timeout = null
+	all_participant_elements.forEach(
+	function(participant_element) {
+		var username = participant_element.innerText.trim()
+		if (username && participant_element) {
+			participant_element.addEventListener("mouseover", function() {
+			timeout = setTimeout(function(){
+				timeout = null
+				get_user_info(username).then((user_data) => {
+				content_html = "<small> Last seen on: " + moment(user_data.last_seen).format('LLL') + "</small>" 			
+				if(user_data.about_me) {
+						content_html = content_html + "<br><i>\u0022" + user_data.about_me.trim() + "\u0022 </i>"}
+
 					popup = $(participant_element).popover({
-							title:'test', content:'test',container:participant_element,
-							delay: { "show":0, "hide": 100 }});
-						popup.popover('show');
-					console.log(participant_element.innerText)},function() {
-							popup.popover('destroy');
-						})
-
-
-	});
+					html: true,
+					title: username, 
+					content: content_html
+				});
+					popup.popover('show')}).catch(err => console.log(err))
+					popup = null
+				},1000)})
+			participant_element.addEventListener("mouseout", function() {
+					if (timeout) {clearTimeout(timeout);timeout=null}
+					if (popup) {popup.popover('destroy');popup=null}
+						}
+			)}})
 </script>
 {% endblock %}    
 

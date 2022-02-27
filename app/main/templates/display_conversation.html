@@ -78,15 +78,11 @@ observer.observe(target);
 		    let new_message = last_message.cloneNode(true);
 		    	const json = e.data.replaceAll("'",'"');
 			const obj = JSON.parse(json);
-			const from = obj.from;
-			const content = obj.content;
 			if (conversation_id == obj.conversation_id){
-		    let timestampNode = new_message.querySelector("#timestamp");
-		    let fromNode = new_message.querySelector("#from");
-		    let contentNode = new_message.querySelector("#message_content");
-		    timestampNode.innerText = moment().format('LLL');
-		    fromNode.innerText = "From: "+ from;
-		    contentNode.innerText = content;
+		    new_message.querySelector("#timestamp").innerText = moment().format('LLL')
+		    new_message.querySelector("#from").innerText = "From: "+ obj.from
+		    new_message.querySelector("#message_content").innerText = obj.content
+		    new_message.querySelector("#avatar_message").setAttribute("src","/static/avatars/" + obj.avatar_name)
 		    parentElement.insertBefore(new_message,last_message);
 					}
                 };

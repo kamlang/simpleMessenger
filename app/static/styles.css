@@ -15,7 +15,7 @@ min-width:80%;
 body
 {
 min-width:600px;
-max-width:960px;
+max-width:760px;
 margin-left: auto;
 margin-right: auto;
 }
@@ -33,28 +33,6 @@ margin :-5px -5px -5px -5px;
 font-size:75%;
 }
 
-.input_field
-{
-padding:0px;
-margin :0px 0px 0px 0px
-
-}
-
-.avatar
-{
-margin: auto;
-max-width: 150px;
-width:64px;
-height:64px;
-}
-
-.profile
-{
-max-width:350px;
-margin-top:20px;
-margin-left: auto;
-margin-right:auto;
-}
 .desc
 {
 max-width:350px;
@@ -68,7 +46,7 @@ padding:5px;
 
 #conversation_container
 {
-max-height:300px;
+max-height:600px;
 overflow:auto;
 }
 
@@ -105,8 +83,46 @@ text-decoration:none;
 }
 
 .popover-content,.popover-title
-
 {
 color:#666666;
 }
 
+
+
+#current_status
+{
+	position:relative;
+	color:#666666;
+	margin-left:20px;
+	z-index: 1;
+}
+
+#current_avatar
+{
+float:left;
+margin-top:-5px;
+width:28px;
+height:28px;
+}
+
+#profile_form
+{
+	position:absolute;
+	float:left;
+	margin-top:-5px;
+	margin-left:40px;
+	margin-bottom:5px;
+}
+
+#profile_form #about_me
+{
+	resize: none;
+	float:left;
+	opacity:0.5;
+	z-index: 2;
+}
+
+#profile_form #avatar,#profile_form #submit
+{
+display:none;
+}

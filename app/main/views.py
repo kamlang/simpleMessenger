@@ -7,6 +7,7 @@ from flask import (
     current_app,
     session,
     g,
+    jsonify,
     abort,
     Response,
 )
@@ -17,13 +18,14 @@ from app.auth import auth
 from app.main import main
 from app import db
 from app.email import send_email
+from app import red
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from werkzeug.urls import url_parse
 from datetime import datetime
 from werkzeug.utils import secure_filename
-from app import red
 import time
+from flask_wtf.csrf import validate_csrf
 
 ### Event loop
 
@@ -42,7 +44,7 @@ def push_message(conversation_id,content):
     users = current_user.get_conversation(conversation_id).users.all()
 
     participants = ' '.join([user.username for user in users])
-    redis_message= {"event": "new_messages", "from": current_user.username,
+    redis_message= {"event": "new_messages", "from": current_user.username, "avatar_name":current_user.avatar_name,
         "conversation_id":conversation_id,"content":content,"participants":participants}
 
     [ red.publish(user.username,str(redis_message)) for user in users ]
@@ -69,28 +71,6 @@ def stream(username):
        return res
     abort(403)
 
-@main.route("/myprofile")
-@login_required
-def showprofile():
-    return render_template("profile.html")
-
-@main.route("/edit_profile", methods=["GET", "POST"])
-@login_required
-def edit():
-    form = editUser()
-    if form.validate_on_submit():
-        if form.about_me.data:
-            current_user.about_me = form.about_me.data
-            db.session.add(current_user)
-            db.session.commit()
-        if form.avatar.data:
-            current_user.set_avatar(form.avatar.data)
-            db.session.add(current_user)
-            db.session.commit()
-        return redirect(url_for("main.showprofile"))
-    return render_template("form.html", form=form, form_name="Edit your profile")
-
-
 @main.route("/create_conversation", methods=["GET", "POST"])
 @login_required
 def new_conversation():
@@ -107,9 +87,20 @@ def new_conversation():
     return render_template("form.html", form=form)
 
 
-@main.route("/conversations")
+@main.route("/conversations", methods=["GET", "POST"])
 @login_required
 def conversations():
+    form = editUser()
+    if form.validate_on_submit():
+        if form.about_me.data:
+            current_user.about_me = form.about_me.data
+            db.session.add(current_user)
+            db.session.commit()
+        if form.avatar.data:
+            current_user.set_avatar(form.avatar.data)
+            db.session.add(current_user)
+            db.session.commit()
+        return redirect(url_for('main.conversations'))
     page = request.args.get("page", 1, type=int)
     conversations = current_user.get_conversations(page)
     next_url = (
@@ -125,6 +116,7 @@ def conversations():
     return render_template(
         "display_conversations.html",
         conversations=conversations.items,
+        form=form,
         next_url=next_url,
         prev_url=prev_url,
     )
@@ -197,6 +189,18 @@ def conversation(conversation_id):
         conversation=conversation,
     )
 
+""" Route which take a username as parameter return a json response.
+Response is used to populate popovers when mouseover event is triggered in conversations."""
+@main.route("/getUserInfo/<username>")
+@login_required
+def get_user_info(username):
+    csrf_token = request.headers.get('X-CSRFToken')
+    try :
+        validate_csrf(csrf_token)
+    except Exception as e:
+        raise e
+    user = User.query.filter_by(username=username).first_or_404()
+    return jsonify({ 'last_seen': user.last_seen,'about_me':user.about_me,'avatar':user.avatar_name})
 
 @main.before_request
 def before_request():
