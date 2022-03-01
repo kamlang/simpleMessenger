@@ -60,7 +60,6 @@ class Message(db.Model):
     sender_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
-
 class User(db.Model, UserMixin):
     __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)

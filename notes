@@ -31,6 +31,13 @@ about conversation:
 check socketio 
 event sqlalchemy ?
 
+change html so you use class instead of ids
+also refactor css file
+order javascript code
+fix start new conversation
+
+add change password features
+
 stream pour les converesations notification ???
 infinite scroll json ?
 handle user disconnection ?

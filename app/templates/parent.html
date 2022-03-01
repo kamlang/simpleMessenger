@@ -4,6 +4,14 @@
     {% if title %}{{ title }}{% else %} simpleMessenger {% endif %}
 {% endblock %}
 
+<head>
+
+{% block scripts %}
+    {{ super() }}
+    {{ moment.include_moment() }}
+{% endblock %}
+</head>
+
 {% block navbar %}
 <body style="background-color: #7d9ac6;">
 <nav class="navbar navbar-default">
@@ -51,6 +59,8 @@
             {% endfor %}
         {% endif %}
         {% endwith %}
+	<script src"//getbootstrap.com/docs/4.0/assets/js/vendor/popper.min.js"></script>
+  	<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 	<script>
 		async function get_user_info(username) {
 		let response = await fetch('/getUserInfo/'+username,
@@ -65,7 +75,4 @@
 
 </body>
 
-{% block scripts %}
-    {{ super() }}
-    {{ moment.include_moment() }}
-{% endblock %}
+
