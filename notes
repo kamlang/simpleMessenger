@@ -34,10 +34,10 @@ also refactor css file done
 
 create conversation,
 
+do not display add user if not admin
+
 user.conversations @setter, @getter 
-
- add users conversation, 
-
+add users conversation, 
 add_message_converstion
 
 @property ?

@@ -1,4 +1,4 @@
-from flask_login import UserMixin, AnonymousUserMixin
+from flask_login import UserMixin, AnonymousUserMixin, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import current_app
 import os
@@ -52,6 +52,20 @@ class Conversation(db.Model):
     admin_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
+    def __iadd__(self, other):
+        if isinstance(other,Message):
+            if current_user in self.users:
+                self.timestamp = datetime.utcnow()
+                self.messages.append(other)
+                db.session.commit()
+            else: raise Exception("Only user which are participants of a conversation can add message")
+
+        if isinstance(other,User):
+            if current_user.id == self.admin_id:
+                self.users.append(other)
+                db.session.commit()
+            else: raise Exception("Only admin of a conversation can add users")
+
 
 class Message(db.Model):
     __tablename__ = "messages"
@@ -94,29 +108,7 @@ class User(db.Model, UserMixin):
         self.conversations.append(c)
         db.session.commit()
         return c.id
-
-    def add_users_conversation(self, conversation_id, usernames):
-        conversation = Conversation.query.get(conversation_id)
-        if self.id == conversation.admin.id:
-            for username in usernames:  ### validation is done in the form
-                user = User.query.filter_by(username=username).first()
-                if not user in conversation.users.all():
-                    conversation.users.append(user)
-                    db.session.commit()
-        else:
-            raise Exception("Only admin of a conversation can add a user.")
-
-
-    def add_message_conversation(self, conversation_id, content):
-        conversation = Conversation.query.get(conversation_id)
-        if self in conversation.users.all():
-            message = Message(sender=self, content=content)
-            conversation.timestamp = datetime.utcnow()
-            conversation.messages.append(message)
-            db.session.commit()
-        else:
-            raise Exception("Only participant of a conversation can add a message.")
-
+    
     def get_conversation(self, conversation_id):
         conversation = Conversation.query.get(conversation_id)
         users = conversation.users.all()
@@ -162,7 +154,7 @@ class User(db.Model, UserMixin):
 
     @property
     def avatar(self):
-        return self.avatar_hash
+        return self._avatar_hash
 
     @avatar.setter
     def avatar(self,avatar_data):

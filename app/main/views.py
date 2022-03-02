@@ -12,7 +12,7 @@ from flask import (
     Response,
 )
 from flask_login import login_user, current_user, logout_user, login_required
-from app.models import User, Role
+from app.models import User, Role, Message, Conversation
 from app.main.forms import editUser, sendReply, createConversation, addUserConversation
 from app.auth import auth
 from app.main import main
@@ -44,7 +44,7 @@ def push_message(conversation_id,content):
     users = current_user.get_conversation(conversation_id).users.all()
 
     participants = ' '.join([user.username for user in users])
-    redis_message= {"event": "new_messages", "from": current_user.username, "avatar_name":current_user.avatar_name,
+    redis_message= {"event": "new_messages", "from": current_user.username, "avatar_name":current_user.avatar,
         "conversation_id":conversation_id,"content":content,"participants":participants}
 
     [ red.publish(user.username,str(redis_message)) for user in users ]
@@ -136,19 +136,16 @@ def conversation(conversation_id):
 
     if form_add.validate_on_submit():
         usernames = form_add.usernames.data.split()
-        username_list = []
         for username in usernames:
-            username_list.append(username)
-        try:
-            current_user.add_users_conversation(conversation_id, username_list)
-        except:
-            flash("Only admin of a conversation can add a user.")
+            user=User.query.filter_by(username=username).first()
+            conversation += user
         return redirect(url_for("main.conversation", conversation_id=conversation_id))
 
     if form_send.validate_on_submit():
             content = form_send.content.data
             try:
-                current_user.add_message_conversation(conversation_id, content)
+                message = Message(sender_id=current_user.id,content=content)
+                conversation += message
                 push_message(conversation_id,content)
             except:
                 raise Exception("An error happened when user submited a message")
