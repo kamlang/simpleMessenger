@@ -6,7 +6,7 @@
 	<div class="well well-sm" id="status">
 		{{ wtf.quick_form(form,form_type="inline",id="profile_form") }}
 	    <span id="current_status"><i>  {{ current_user.about_me }}</i> </span>
-	    <img title="Click to change your avatar!" class="current_avatar" src="/static/avatars/{{current_user.avatar_name}}" onerror="this.src='/static/avatars/default.png'">
+	    <img title="Click to change your avatar!" class="current_avatar" src="/static/avatars/{{current_user.avatar}}" onerror="this.src='/static/avatars/default.png'">
 
 	</div>
 	<div class="well well-sm" id="conversations">
@@ -23,7 +23,7 @@
 	<a href ="{{url_for('main.conversation',conversation_id = conversation.id)}}" class="link_to_conversation">
 	<div class="well well-sm message_container" style="background-color: #ffffff;">
 		<span class="sender"> From: {{last_message.sender.username}} </span>
-		<img class="avatar_message" src="/static/avatars/{{ last_message.sender.avatar_name}}" onerror="this.src='/static/avatars/default.png'">
+		<img class="avatar_message" src="/static/avatars/{{ last_message.sender.avatar}}" onerror="this.src='/static/avatars/default.png'">
 			<small style="float: right;" class="timestamp"> {{moment(conversation.timestamp).format('LLL')}}</small>
 			<p class="message_content">{{conversation.messages.first().content}}</p>
 	</div>

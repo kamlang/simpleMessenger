@@ -13,6 +13,7 @@ max-width:760px;
 margin-left: auto;
 margin-right: auto;
 color:white;
+z-index:1;
 }
 
 td, th
@@ -53,6 +54,7 @@ div[id*="conversation_"]
 {
 color:white;
 background-color:LightSteelBlue;
+z-index:2;
 margin:5px;
 padding:5px;
 border-radius: 10px;
@@ -117,4 +119,13 @@ color:#666666;
 display:none;
 }
 
+.add_user_form
+{
+  color:black;
+}
 
+
+#reply_container
+{
+  color:black;
+}

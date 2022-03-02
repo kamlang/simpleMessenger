@@ -2,7 +2,7 @@
 {% import 'bootstrap/wtf.html' as wtf %}
 
 {% block app_content %}
-	<div class="well well-sm">
+	<div class="well well-sm add_user_form">
 		<small> You can use the field below to add other users to the conversation, if many separate username with space.</small>
 		{{ wtf.quick_form(form_add) }}
 	</div>
@@ -20,7 +20,7 @@
 	{%for message in messages %}
 	<div class="well well-sm message_container" style="background-color: #ffffff;">
 		<span class="sender">From: {{message.sender.username}}</span>
-			<img class="avatar_message" src="/static/avatars/{{message.sender.avatar_name}}" onerror="this.src='/static/avatars/default.png'">
+			<img class="avatar_message" src="/static/avatars/{{message.sender.avatar}}" onerror="this.src='/static/avatars/default.png'">
 		<small style="float: right;" class="timestamp"> {{moment(message.timestamp).format('LLL')}}</small>
 			<p class="message_content"> {{message.content}}</p>
 	</div>

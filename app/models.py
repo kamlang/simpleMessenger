@@ -80,7 +80,8 @@ class User(db.Model, UserMixin):
         lazy="dynamic",
     )
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
-    avatar_name = db.Column(db.String(32),default="default.png")
+    _avatar_hash = db.Column(db.String(32),default="default.png")
+
 
     def create_conversation(self, usernames, content):
         c = Conversation()
@@ -159,11 +160,13 @@ class User(db.Model, UserMixin):
                 return True
         return False
 
-    def last_seen_clean(self):
-        cleantime = self.last_seen.strftime("%A %d-%b-%Y, %H:%M")
-        return cleantime
+    @property
+    def avatar(self):
+        return self.avatar_hash
 
-    def set_avatar(self, avatar_data):
+    @avatar.setter
+    def avatar(self,avatar_data):
+
         import hashlib
         from PIL import Image
 
@@ -181,10 +184,6 @@ class User(db.Model, UserMixin):
             )
         except:
             flash("Please provide a valid image file")
-
-    def get_avatar_path(self):
-        return os.path.join("../static/avatars/", str(self.avatar_name))
-
 
 class AnonymousUser(AnonymousUserMixin):
     def is_role(self, role):

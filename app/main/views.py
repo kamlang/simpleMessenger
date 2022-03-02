@@ -97,7 +97,7 @@ def conversations():
             db.session.add(current_user)
             db.session.commit()
         if form.avatar.data:
-            current_user.set_avatar(form.avatar.data)
+            current_user.avatar =form.avatar.data
             db.session.add(current_user)
             db.session.commit()
         return redirect(url_for('main.conversations'))

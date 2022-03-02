@@ -26,13 +26,33 @@ give the possiblity to send a message in a conversation (be carefull to validati
 remove welcom page go directly to login done
 change the way registration is handled. don't log user in to confirm account done
 auto update discussion and conversation done
+change html so you use class instead of ids done
+also refactor css file done
+
+
+#### refactor app models
+
+create conversation,
+
+user.conversations @setter, @getter 
+
+ add users conversation, 
+
+add_message_converstion
+
+@property ?
+
+set avatar property avatar_name @setter, #getter
+
+move self.avatar_name to _self.avatar
+
+
+###
 
 about conversation:
 check socketio 
 event sqlalchemy ?
 
-change html so you use class instead of ids
-also refactor css file
 order javascript code
 fix start new conversation
 
@@ -41,7 +61,6 @@ add change password features
 stream pour les converesations notification ???
 infinite scroll json ?
 handle user disconnection ?
-
 
 give the possibility to leave a group.
 give the ability to remove a message.
