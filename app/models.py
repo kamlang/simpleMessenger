@@ -1,5 +1,6 @@
 from flask_login import UserMixin, AnonymousUserMixin, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy import event
 from flask import current_app
 import os
 from datetime import datetime
@@ -52,19 +53,36 @@ class Conversation(db.Model):
     admin_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
-    def __iadd__(self, other):
-        if isinstance(other,Message):
-            if current_user in self.users:
-                self.timestamp = datetime.utcnow()
-                self.messages.append(other)
-                db.session.commit()
-            else: raise Exception("Only user which are participants of a conversation can add message")
 
-        if isinstance(other,User):
-            if current_user.id == self.admin_id:
-                self.users.append(other)
-                db.session.commit()
-            else: raise Exception("Only admin of a conversation can add users")
+    def add_users(self,username_list):
+        if current_user == self.admin: 
+            for username in username_list:
+                user = User.query.filter_by(username=username).first()
+                self.users.append(user)
+            db.session.commit()
+        else: 
+            raise Exception("Only admin of a conversation can add users")
+
+
+    def add_message(self,message):
+        if current_user in self.users:
+            self.timestamp = datetime.utcnow()
+            self.messages.append(message)
+            db.session.commit()
+        else: 
+            raise Exception("Only user which are participants of a conversation can add message")
+
+    @staticmethod 
+    def create_new(admin, message, username_list): ## do not work because commit is done after first +=
+        conversation = Conversation()
+        conversation.admin = admin
+        conversation.users.append(admin)
+        for username in username_list:
+            user = User.query.filter_by(username=username).first()
+            conversation.users.append(user)
+        conversation.messages.append(message)
+        db.session.commit()
+        return conversation
 
 
 class Message(db.Model):
@@ -73,6 +91,7 @@ class Message(db.Model):
     content = db.Column(db.String())
     sender_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
 
 class User(db.Model, UserMixin):
     __tablename__ = "users"
@@ -96,25 +115,11 @@ class User(db.Model, UserMixin):
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
     _avatar_hash = db.Column(db.String(32),default="default.png")
 
-
-    def create_conversation(self, usernames, content):
-        c = Conversation()
-        m = Message(sender=self, content=content)
-        c.users.append(self)
-        c.messages.append(m)
-        for username in usernames:  ### validation is done in the form
-            user = User.query.filter_by(username=username).first()
-            c.users.append(user)
-        self.conversations.append(c)
-        db.session.commit()
-        return c.id
-    
-    def get_conversation(self, conversation_id):
-        conversation = Conversation.query.get(conversation_id)
-        users = conversation.users.all()
-        if self in users:
-            return conversation
-        return None
+    def is_allowed_to_access(self,conversation):
+        allowed_users = conversation.users.all()
+        if self in allowed_users:
+            return True
+        return False
 
     def get_conversations(self, page):
         conversations = (
@@ -146,7 +151,7 @@ class User(db.Model, UserMixin):
         except:
             raise AttributeError("The role specified do not exists")
 
-    def is_role(self, role):
+    def is_role(self, role): # Ugly
         for r in self.roles:
             if r.name == role:
                 return True
@@ -168,7 +173,8 @@ class User(db.Model, UserMixin):
             image2 = Image.new(image.mode, image.size)
             image2.putdata(data)
             filename = hashlib.md5(self.username.encode())
-            self.avatar_name = filename.hexdigest()
+            self._avatar_hash = filename.hexdigest()
+            
             image2.thumbnail((128, 128))
             image2.save(
                 os.path.join(current_app.config["UPLOAD_FOLDER"], filename.hexdigest()),

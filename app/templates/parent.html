@@ -61,15 +61,8 @@
         {% endwith %}
 	<script src"//getbootstrap.com/docs/4.0/assets/js/vendor/popper.min.js"></script>
   	<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-	<script>
-		async function get_user_info(username) {
-		let response = await fetch('/getUserInfo/'+username,
-				{ headers:{'X-CSRFToken': csrf_token }})
-				let json = await response.json()
-				return json
-		}
-	</script>
-        {# application content needs to be provided in the app_content block #}
+  	<script src="/static/script.js"></script>
+	{# application content needs to be provided in the app_content block #}
 	{%block app_content%}{%endblock%}
 {% endblock %}
 

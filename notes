@@ -28,13 +28,16 @@ change the way registration is handled. don't log user in to confirm account don
 auto update discussion and conversation done
 change html so you use class instead of ids done
 also refactor css file done
+do not display add user if not admin done
+create conversation can be change not done because unreadable
+add avatars in conversation done
 
 
 #### refactor app models
 
-create conversation,
-
-do not display add user if not admin
+change is_role not pretty
+change user to participant ?
+choose between user and username participant this confuisng rn
 
 user.conversations @setter, @getter 
 add users conversation, 
@@ -42,10 +45,7 @@ add_message_converstion
 
 @property ?
 
-set avatar property avatar_name @setter, #getter
-
-move self.avatar_name to _self.avatar
-
+add user on one line.
 
 ###
 
@@ -63,8 +63,7 @@ infinite scroll json ?
 handle user disconnection ?
 
 give the possibility to leave a group.
-give the ability to remove a message.
-add avatars in conversation
+give the ability to remove a message and a user
 fix admin panel especially user edit function
 uuid for conversation
 redis ssl

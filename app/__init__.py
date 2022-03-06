@@ -59,6 +59,8 @@ def create_app(config_name):
         )
         mail_handler.setLevel(logging.ERROR)
 
+
+
         app.logger.addHandler(mail_handler)
 
         if not os.path.exists("logs"):

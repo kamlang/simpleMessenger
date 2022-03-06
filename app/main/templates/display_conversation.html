@@ -2,10 +2,12 @@
 {% import 'bootstrap/wtf.html' as wtf %}
 
 {% block app_content %}
+        {% if current_user == conversation.admin %}
 	<div class="well well-sm add_user_form">
 		<small> You can use the field below to add other users to the conversation, if many separate username with space.</small>
 		{{ wtf.quick_form(form_add) }}
 	</div>
+        {% endif %}
 	<div class="well well-sm" id="messages">
 	<span id='participants'>Participant: {%for user in users %}
 			{%if current_user.username != user.username%}
@@ -39,72 +41,28 @@
 		
 	</div>
 	
-	<script>
+<script>
+  var csrf_token = "{{ csrf_token() }}";
+  let conversation_id = "{{ conversation.id }}"
+  var event_stream_url = "{{url_for('main.stream',username = current_user.username)}}"
+  document.addEventListener('DOMContentLoaded', sse_conversation(conversation_id,event_stream_url));
+  var all_participant_elements  =  document.querySelectorAll('.participant');
+  document.addEventListener('DOMContentLoaded', set_participant_popover_events(all_participant_elements));
 
-	    document.addEventListener('DOMContentLoaded', sse_conversation());
+  // change this to pure js
+  $('#send_reply').click(function(e){
+  $.post("{{url_for('main.conversation',conversation_id = conversation.id)}}", {
+  'content': $('#content').val(),'csrf_token' : $('#csrf_token').val()});
+                          $('#content').val('');
+                  });
+  
+  $('#reply_container').keyup(function(e){
+  var code = e.key;
+  if(code==="Enter") {
+  $.post("{{url_for('main.conversation',conversation_id = conversation.id)}}", {
+  'content': $('#content').val(),'csrf_token' : $('#csrf_token').val()});
+                                                  $('#content').val('');}
+                  });
 
-            function sse_conversation() {
-		var source = new EventSource("{{url_for('main.stream',username=current_user.username)}}");
-		conversation_id = {{ conversation.id}}
-                source.onmessage = function(e) {
-		    let parent_element = document.getElementById('conversation_container');
-		    let last_message = parent_element.getElementsByClassName('message_container')[0];
-		    let new_message = last_message.cloneNode(true);
-		    	const json = e.data.replaceAll("'",'"');
-			const obj = JSON.parse(json);
-			if (conversation_id == obj.conversation_id){
-		    new_message.querySelector(".timestamp").innerText = moment().format('LLL')
-		    new_message.querySelector(".sender").innerText = "From: "+ obj.from
-		    new_message.querySelector(".message_content").innerText = obj.content
-		    new_message.querySelector(".avatar_message").setAttribute("src","/static/avatars/" + obj.avatar_name)
-		    parent_element.insertBefore(new_message,last_message);
-					}
-                };
-            }
-
-		$('#send_reply').click(function(e){
-		$.post("{{url_for('main.conversation',conversation_id = conversation.id)}}", {
-		'content': $('#content').val(),'csrf_token' : $('#csrf_token').val()});
-					$('#content').val('');
-				});
-		
-		$('#reply_container').keyup(function(e){
-		var code = e.key;
-		if(code==="Enter") {
-		$.post("{{url_for('main.conversation',conversation_id = conversation.id)}}", {
-		'content': $('#content').val(),'csrf_token' : $('#csrf_token').val()});
-								$('#content').val('');}
-				});
-	var csrf_token = "{{ csrf_token() }}";
-	var all_participant_elements  =  document.querySelectorAll('.participant');
-	var popup = null	
-	var timeout = null
-	all_participant_elements.forEach(
-	function(participant_element) {
-		var username = participant_element.innerText.trim()
-		if (username && participant_element) {
-			participant_element.addEventListener("mouseover", function() {
-			timeout = setTimeout(function(){
-				timeout = null
-				get_user_info(username).then((user_data) => {
-				content_html = "<small> Last seen on: " + moment(user_data.last_seen).format('LLL') + "</small>" 			
-				if(user_data.about_me) {
-						content_html = content_html + "<br><i>\u0022" + user_data.about_me.trim() + "\u0022 </i>"}
-
-					popup = $(participant_element).popover({
-					html: true,
-					title: username, 
-					content: content_html
-				});
-					popup.popover('show')}).catch(err => console.log(err))
-//					popup = null
-				},1000)})
-			participant_element.addEventListener("mouseout", function() {
-					if (timeout) {clearTimeout(timeout);timeout=null}
-					if (popup) {popup.popover('destroy');popup=null}
-						}
-			)}})
-	
-
-	</script>
+</script>
 {% endblock %}    

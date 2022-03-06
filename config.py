@@ -4,7 +4,6 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 
 class Config:
-    SECRET_KEY = "é$àéà$séf34efi][}{"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SESSION_COOKIE_SECURE = True
     REMEMBER_COOKIE_SECURE = True
@@ -16,11 +15,15 @@ class Config:
     MAIL_USERNAME = os.environ.get("MAIL_USERNAME")
     ADMINS = ["glgmsh@protonmail.com"]
     POSTS_PER_PAGE = 7
-    REDIS_URL = "redis://localhost:6379"
 
 
 class DevelopmentConfig(Config):
     DEBUG = True
+    SECRET_KEY = "i$àdf$àd-gdà241243$-fà$gsb-sà$a-d$às"
+    REDIS_URL = "redis://localhost:6379"
+    REDIS_PASSWORD = os.environ.get("REDIS_PASSWORD")
+    SSL_KEYFILE = os.path.join(basedir, "./certs/key.pem")
+    SSL_CERTFILE =os.path.join(basedir, "./certs/cert.pem")
     USER_EMAIL_SENDER_EMAIL = "Admin"
     MAIL_SERVER = "localhost"
     MAIL_PORT = 8025
@@ -42,6 +45,7 @@ class TestingConfig(Config):
 
 
 class ProductionConfig(Config):
+    SECRET_KEY = os.environ.get("SECRET_KEY")
     USER_EMAIL_SENDER_EMAIL = os.environ.get("MAIL_USERNAME")
     MAIL_SERVER = "smtp.gmail.com"
     MAIL_PORT = 587

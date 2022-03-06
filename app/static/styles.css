@@ -4,20 +4,20 @@
 
 table
 {
-max-width:80%;
-min-width:80%;
+  max-width:80%;
+  min-width:80%;
 }
 
 body
 {
-background-image: url("background.png");
-background-repeat: repeat;
-min-width:600px;
-max-width:760px;
-margin-left: auto;
-margin-right: auto;
-color:white;
-z-index:1;
+  background-image: url("background.png");
+  background-repeat: repeat;
+  min-width:600px;
+  max-width:760px;
+  margin-left: auto;
+  margin-right: auto;
+  color:white;
+  z-index:1;
 }
 
 td, th
@@ -29,108 +29,113 @@ td, th
 
 .errors 
 {
-padding:-5px;
-margin :-5px -5px -5px -5px;
-font-size:75%;
+  padding:-5px;
+  margin :-5px -5px -5px -5px;
+  font-size:75%;
 }
 
 
 #conversations,#messages
 {
-padding:5px;
+  padding:5px;
 }
 
 #conversation_container
 {
-max-height:600px;
-overflow:auto;
+  max-height:600px;
+  overflow:auto;
 }
 
-.message_container{
-
-word-break: break-all;
-border-radius: 10px;
-margin:5px;
-color:var(--fg-black);
+.message_container
+{
+  word-break: break-all;
+  border-radius: 10px;
+  margin:5px;
+  color:var(--fg-black);
 }
 
 div[id*="conversation_"]
 {
-color:white;
-background-color:LightSteelBlue;
-z-index:2;
-margin:5px;
-padding:5px;
-border-radius: 10px;
+  color:white;
+  visibility: visible;
+  background-color:LightSteelBlue;
+  z-index:2;
+  margin:5px;
+  padding:5px;
+  border-radius: 10px;
 }
 
 .avatar_message
 {
-border-radius: 10%;	
-width: 48px;
-height: 48px;
-float: left;
-margin-right: 10px;
-margin-top:2px;
+  border-radius: 10%;	
+  width: 48px;
+  height: 48px;
+  float: left;
+  margin-right: 10px;
+  margin-top:2px;
 }
 
-.link_to_conversation
-{
-text-decoration:none;
-}
 
 .popover-content,.popover-title
 {
-color:var(--fg-black);
+  color:var(--fg-black);
 }
 
 #current_status
 {
-position:relative;
-color:var(--fg-black);
-margin-left:20px;
-z-index: 1;
+  position:relative;
+  color:var(--fg-black);
+  margin-left:20px;
+  z-index: 1;
 }
 
 .current_avatar
 {
-float:left;
-margin-top:-5px;
-width:28px;
-height:28px;
+  float:left;
+  margin-top:-5px;
+  width:28px;
+  height:28px;
 }
 
 #profile_form
 {
-position:absolute;
-float:left;
-margin-top:-5px;
-margin-left:40px;
-margin-bottom:5px;
+  position:absolute;
+  float:left;
+  margin-top:-5px;
+  margin-left:40px;
+  margin-bottom:5px;
 }
 
 #profile_form #about_me
 {
-resize: none;
-float:left;
-opacity:0.5;
-z-index: 2;
-height:30px;
+  resize: none;
+  float:left;
+  opacity:0.5;
+  z-index: 2;
+  height:30px;
 }
 
 #profile_form #avatar,#profile_form #submit
 {
-display:none;
+  display:none;
 }
 
 .add_user_form
 {
-color:var(--fg-black);
+  color:var(--fg-black);
 }
 
 
 #reply_container, #messages
 {
-color:var(--fg-black);
+  color:var(--fg-black);
 }
 
+a[class*="link_to_conversation"]
+{
+  text-decoration:none;
+}
+
+a[class*="link_to_conversation"]:hover {
+  color: black;
+}
