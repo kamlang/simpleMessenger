@@ -139,3 +139,7 @@ a[class*="link_to_conversation"]
 a[class*="link_to_conversation"]:hover {
   color: black;
 }
+
+#content {
+  resize:none;
+}

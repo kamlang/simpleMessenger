@@ -32,15 +32,16 @@ class editUser(FlaskForm):
 
 
 class sendReply(FlaskForm):
-    content = TextAreaField(
+    content = StringField(
         "",
         validators=[
             InputRequired(message="This field can not be empty"),
-            Length(0, 280, message="Keep it short."),
+            Length(1, 280, message="Keep it short."),
+            Regexp("\w+", message="You should post at least one character."),
         ],
-        render_kw={"rows": 2, "cols": 45},
+        render_kw={"rows": 1, "cols": 45},
     )
-#    submit = SubmitField("Send",id="send_reply")
+    submit = SubmitField("Submit")
 
 
 class createConversation(FlaskForm):
@@ -72,7 +73,7 @@ class addUserConversation(FlaskForm):
     usernames = StringField(
         "",
         validators=[
-            InputRequired(message="This field can not be empty"),
+            InputRequired(message="Please enter at least one user."),
             Regexp("^[0-9A-Za-z_\s]+$", message="Special characters are not allowed."),
         ],
     )

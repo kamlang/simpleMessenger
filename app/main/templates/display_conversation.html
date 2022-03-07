@@ -33,8 +33,6 @@
 
 	<span id="reply_container">
  		{{ wtf.quick_form(form_send)}}
-	 	{{ form_send.csrf_token() }}
-	 	<button type="button" id="send_reply">Send !</button> 
 		</span>
            	</div>
 		
@@ -42,27 +40,10 @@
 	</div>
 	
 <script>
-  var csrf_token = "{{ csrf_token() }}";
   let conversation_id = "{{ conversation.id }}"
-  var event_stream_url = "{{url_for('main.stream',username = current_user.username)}}"
+  let event_stream_url = "{{url_for('main.stream',username = current_user.username)}}"
   document.addEventListener('DOMContentLoaded', sse_conversation(conversation_id,event_stream_url));
-  var all_participant_elements  =  document.querySelectorAll('.participant');
+  let all_participant_elements  =  document.querySelectorAll('.participant');
   document.addEventListener('DOMContentLoaded', set_participant_popover_events(all_participant_elements));
-
-  // change this to pure js
-  $('#send_reply').click(function(e){
-  $.post("{{url_for('main.conversation',conversation_id = conversation.id)}}", {
-  'content': $('#content').val(),'csrf_token' : $('#csrf_token').val()});
-                          $('#content').val('');
-                  });
-  
-  $('#reply_container').keyup(function(e){
-  var code = e.key;
-  if(code==="Enter") {
-  $.post("{{url_for('main.conversation',conversation_id = conversation.id)}}", {
-  'content': $('#content').val(),'csrf_token' : $('#csrf_token').val()});
-                                                  $('#content').val('');}
-                  });
-
-</script>
+   </script>
 {% endblock %}    

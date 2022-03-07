@@ -147,7 +147,9 @@ def conversation(conversation_id):
         message = Message(sender=current_user,content=content)
         conversation.add_message(message)
         push_message(conversation,content)
-        return Response(status=204)
+    #    return Response(status=204)
+        return redirect(url_for("main.conversation",conversation_id = conversation_id))
+
 
     users = conversation.users.all() # users ?
     messages = conversation.messages.paginate(
