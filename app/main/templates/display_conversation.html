@@ -2,43 +2,47 @@
 {% import 'bootstrap/wtf.html' as wtf %}
 
 {% block app_content %}
-        {% if current_user == conversation.admin %}
-	<div class="well well-sm add_user_form">
-		<small> You can use the field below to add other users to the conversation, if many separate username with space.</small>
-		{{ wtf.quick_form(form_add) }}
-	</div>
-        {% endif %}
-	<div class="well well-sm" id="messages">
-	<span id='participants'>Participant: {%for user in users %}
-			{%if current_user.username != user.username%}
-			<span class="participant">{{user.username}}</span>
-			{%else%} Me
-			{%endif%} 
+  {% if current_user == conversation.admin %}
+    <div class="well well-sm add_user_form">
+    <small> You can use the field below to add other users to the conversation, if many separate username with space.</small>
+    {{ wtf.quick_form(form_add) }}
+    </div>
+  {% endif %}
+  <div class="well well-sm" id="messages">
+    <span id='participants'>Participant:
+      {%for user in users %}
+        {%if current_user.username != user.username%}
+          <span class="participant">{{user.username}}</span>
+        {%else%} Me
+        {%endif%} 
 
-	{%endfor%} </span>
-	<span style="float: right;">Admin: {{ admin }}</span>
-<div class="well well-sm" id="conversation_container">
+      {%endfor%}
+    </span>
 
-	{%for message in messages %}
-	<div class="well well-sm message_container" style="background-color: #ffffff;">
-		<span class="sender">From: {{message.sender.username}}</span>
-			<img class="avatar_message" src="/static/avatars/{{message.sender.avatar}}" onerror="this.src='/static/avatars/default.png'">
-		<small style="float: right;" class="timestamp"> {{moment(message.timestamp).format('LLL')}}</small>
-			<p class="message_content"> {{message.content}}</p>
-	</div>
-	{%endfor%}
-	{%if prev_url %}<a href={{prev_url}}>Previous</a>{%endif%}
-		{%if next_url %}<a href={{next_url}}>Next</a>{%endif%}
-           	</div>
+    <span style="float: right;">Admin: {{ admin }}</span>
+    <div class="well well-sm" id="conversation_container">
+      {%if not messages %} 
+        <div class="well well-sm message_container" style="background-color: #ffffff;">
+          <span class="sender"> </span>
+          <img class="avatar_message" src= ""  hidden>
+          <small style="float: right;" class="timestamp"> </small>
+          <p class="message_content">No message for the moment.</p>
+        </div>
+      {%endif%}
+      {%for message in messages %}
+        <div class="well well-sm message_container" style="background-color: #ffffff;">
+          <span class="sender">From: {{message.sender.username}}</span>
+          <img class="avatar_message" src="/static/avatars/{{message.sender.avatar}}">
+          <small style="float: right;" class="timestamp"> {{moment(message.timestamp).format('LLL')}}</small>
+          <p class="message_content"> {{message.content}}</p>
+        </div>
+      {%endfor%}
+      {%if prev_url %}<a href={{prev_url}}>Previous</a>{%endif%}
+      {%if next_url %}<a href={{next_url}}>Next</a>{%endif%}
+    </div>
+    <span id="reply_container"> {{ wtf.quick_form(form_send)}} </span>
+  </div>
 
-	<span id="reply_container">
- 		{{ wtf.quick_form(form_send)}}
-		</span>
-           	</div>
-		
-		
-	</div>
-	
 <script>
   let csrf_token = "{{csrf_token()}}"
   let conversation_id = "{{ conversation.id }}"
@@ -46,5 +50,5 @@
   document.addEventListener('DOMContentLoaded', sse_conversation(conversation_id,event_stream_url));
   let all_participant_elements  =  document.querySelectorAll('.participant');
   document.addEventListener('DOMContentLoaded', set_participant_popover_events(all_participant_elements));
-   </script>
+</script>
 {% endblock %}    

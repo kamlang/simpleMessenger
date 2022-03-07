@@ -74,18 +74,8 @@ def stream(username): # edit so it's prettier
 @main.route("/create_conversation", methods=["GET", "POST"])
 @login_required
 def new_conversation():
-    form = createConversation()
-    if form.validate_on_submit():
-        content = form.content.data
-        username_list = form.usernames.data.split()
-
-        new_conversation = Conversation.create_new(admin = current_user,
-                message = Message(sender=current_user,content=content),
-                username_list = username_list)
-                
-        push_message(new_conversation,content)
-        return redirect(url_for("main.conversations"))
-    return render_template("form.html", form=form)
+    new_conversation = Conversation.create_new(admin = current_user)
+    return redirect(url_for("main.conversation",conversation_id = new_conversation.id))
 
 
 @main.route("/conversations", methods=["GET", "POST"])
@@ -186,7 +176,7 @@ def conversation(conversation_id):
         conversation=conversation,
     )
 
-""" Route which take a username as parameter return a json response.
+""" Route which take a username as parameter and return a json response.
 Response is used to populate popovers when mouseover event is triggered in conversations."""
 @main.route("/getUserInfo/<username>")
 @login_required

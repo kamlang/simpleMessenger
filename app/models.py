@@ -73,14 +73,10 @@ class Conversation(db.Model):
             raise Exception("Only user which are participants of a conversation can add message")
 
     @staticmethod 
-    def create_new(admin, message, username_list): ## do not work because commit is done after first +=
+    def create_new(admin):
         conversation = Conversation()
         conversation.admin = admin
         conversation.users.append(admin)
-        for username in username_list:
-            user = User.query.filter_by(username=username).first()
-            conversation.users.append(user)
-        conversation.messages.append(message)
         db.session.commit()
         return conversation
 

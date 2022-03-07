@@ -31,14 +31,20 @@ also refactor css file done
 do not display add user if not admin done
 create conversation can be change not done because unreadable
 add avatars in conversation done
+edit user form is broken done
+order javascript code
+handle user disconnection ? done with stream_context
+make a profile page with the possibility of uploading a picture done
+see error raised by wtfroms done
+stream pour les converesations notification done
 
 
 #### refactor app models
 
+think about tests
 change is_role not pretty
 change user to participant ?
 choose between user and username participant this confuisng rn
-edit user form is broken
 
 user.conversations @setter, @getter 
 add users conversation, 
@@ -46,22 +52,16 @@ add_message_converstion
 
 @property ?
 
-add user on one line.
+add user on one line message send one one line, new conversation change ?
 
 ###
 
 about conversation:
 check socketio 
 event sqlalchemy ?
-
-order javascript code
-fix start new conversation
-
 add change password features
 
-stream pour les converesations notification ???
 infinite scroll json ?
-handle user disconnection ?
 
 give the possibility to leave a group.
 give the ability to remove a message and a user
@@ -88,11 +88,9 @@ add search in notes feature
 
 think of nice feature to implement and draw how they should look
 
-make a profile page with the possibility of uploading a picture.
 And create article then allow user to comment.
 newsletter functionallity
 
-see error raised by wtfroms
 
 Things to implement:
 
