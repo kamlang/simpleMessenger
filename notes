@@ -38,6 +38,7 @@ add avatars in conversation done
 change is_role not pretty
 change user to participant ?
 choose between user and username participant this confuisng rn
+edit user form is broken
 
 user.conversations @setter, @getter 
 add users conversation, 

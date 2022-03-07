@@ -33,12 +33,12 @@ def admin_required(f):
     return is_admin
 
 
-@restricted.route("/showall")  ### Admin
+@restricted.route("/showall")
 @login_required
 @admin_required
 def showall():
-    users = User.query.all()
-    return render_template("showall.html", users=users)
+    all_users = User.query.all()
+    return render_template("showall.html", users=all_users)
 
 
 @restricted.route("/edit/<username>", methods=["GET", "POST"])  ###Admin
@@ -46,12 +46,12 @@ def showall():
 @admin_required
 def edit(username):
     form = editUserForm()
-    form.role.choices = getRolesList()
-    if form.validate() == True:
+    form.role.choices = get_roles_list()
+    if form.validate_on_submit():
         role = request.form["role"]
         user = User.query.filter_by(username=username).first()
         role = Role.query.filter_by(name=role).first()
-        if user is not None:
+        if user:
             user.roles = [role]
             try:
                 db.session.commit()
@@ -59,19 +59,19 @@ def edit(username):
                 return redirect(url_for("restricted.showall"))
             except Exception as e:
                 db.session.rollback()
-                flash("error in UPDATE operation")
+                flash(errorMessage)
                 return redirect(url_for("restricted.showall"))
     return render_template("edit.html", form=form, user=username)
 
 
-@restricted.route("/delete/<username>")  ###Admin
+@restricted.route("/delete/<username>") 
 @login_required
 @admin_required
 def delete(username):
-    q = User.query.filter_by(username=username).first()
-    if q is not None:
+    user = User.query.filter_by(username=username).first()
+    if user:
         try:
-            db.session.delete(q)
+            db.session.delete(user)
             db.session.commit()
             flash(successMessage)
         except Exception as e:
@@ -81,9 +81,9 @@ def delete(username):
     return redirect(url_for("restricted.showall"))
 
 
-def getRolesList():
-    rolesList = []
-    q = Role.query.all()
-    for role in q:
-        rolesList.append(role.name)
-    return rolesList
+def get_roles_list():
+    roles_list = []
+    existing_roles = Role.query.all()
+    for role in existing_roles:
+        roles_list.append(role.name)
+    return roles_list
