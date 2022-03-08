@@ -47,6 +47,11 @@ change is_role not pretty
 change user to participant ?
 choose between user and username participant this confuisng rn
 
+It would be nice to be connected to the stream throught parent template.
+Then check if user is in conversations or conversation/number ...
+and handle thing differently.
+maybe also add a "have been read attribute to conversation which would be trigger each time a user click on a conversation.
+
 @property ?
 
 ###

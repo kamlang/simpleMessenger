@@ -20,6 +20,7 @@ from app.main import main
 from app import db
 from app.email import send_email
 from app import red
+from html import escape
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from werkzeug.urls import url_parse
@@ -187,7 +188,8 @@ def get_user_info(username):
     except Exception as e:
         raise e
     user = User.query.filter_by(username=username).first_or_404()
-    return jsonify({ 'last_seen': user.last_seen,'about_me':user.about_me,'avatar':user.avatar})
+    # Has this will be injected directly into an html string we have to escape about_me which is an untrusted user input.
+    return jsonify({ 'last_seen': user.last_seen,'about_me':escape(user.about_me),'avatar':user.avatar})
 
 @main.before_request
 def before_request():

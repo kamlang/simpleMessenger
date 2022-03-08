@@ -143,3 +143,8 @@ a[class*="link_to_conversation"]:hover {
 #content {
   resize:none;
 }
+
+.new_messages_count
+{
+  color:LightCoral;
+}
