@@ -20,7 +20,8 @@
     <ul class="nav navbar-nav navbar-left">
 {% if current_user.is_authenticated %}
       <li class="nav-item">
-      	<a href={{url_for('main.conversations' )}} class="nav-link">My conversations</a>
+        <a href={{url_for('main.conversations' )}} class="nav-link">My conversations
+          <span class="new_messages_count"></span></a>
       </li>
       <li class="nav-item">
     <a href="{{url_for('auth.logout')}}" class="nav-link">Logout</a>
