@@ -26,6 +26,8 @@ class ConversationUsers(db.Model):
         db.Integer(), db.ForeignKey("conversations.id", ondelete="CASCADE")
     )
     user_id = db.Column(db.Integer(), db.ForeignKey("users.id", ondelete="CASCADE"))
+    unread_messages = db.Column(db.Integer(),default=0)
+
 
 
 class ConversationMessages(db.Model):
@@ -61,16 +63,27 @@ class Conversation(db.Model):
                 self.users.append(user)
             db.session.commit()
         else: 
-            raise Exception("Only admin of a conversation can add users")
+            raise Exception("Only admin of a conversation can add users.")
 
+    def increment_unread_messages(self,user_list):
+        for user in user_list:
+            q = ConversationUsers.query.filter_by(user_id=user.id,converation_id=self.id).first()
+            q.unread_messages +=1
 
+    def reset_unread_messages(self,user):
+        q=ConversationUsers.query.filter_by(user_id=user.id,converation_id=self.id).first()
+        q.unread_messages = 0
+        db.session.commit()
+     
     def add_message(self,message):
         if current_user in self.users:
             self.timestamp = datetime.utcnow()
             self.messages.append(message)
+            ## Add +1 to new message count for all users in the conversation
+            self.increment_unread_messages(self.users)
             db.session.commit()
         else: 
-            raise Exception("Only user which are participants of a conversation can add message")
+            raise Exception("Only user which are participants of a conversation can add message.")
 
     @staticmethod 
     def create_new(admin):
@@ -96,7 +109,6 @@ class User(db.Model, UserMixin):
     password_hash = db.Column(db.String(100))
     email = db.Column(db.String(155))
     roles = db.relationship("Role", secondary="user_roles")
-
     confirmed = db.Column(db.Boolean, default=False)
     about_me = db.Column(db.String(140))
     messages_sent = db.relationship(
@@ -110,6 +122,10 @@ class User(db.Model, UserMixin):
     )
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
     _avatar_hash = db.Column(db.String(32),default="default.png")
+
+    def number_of_unread_messages(self,conversation):
+        q=ConversationUsers.query.filter_by(user_id=self.id,converation_id=conversation.id).first()
+        return q.unread_messages
 
     def is_allowed_to_access(self,conversation):
         allowed_users = conversation.users.all()
@@ -147,9 +163,9 @@ class User(db.Model, UserMixin):
         except:
             raise AttributeError("The role specified do not exists")
 
-    def is_role(self, role): # Ugly
-        for r in self.roles:
-            if r.name == role:
+    def is_role(self, role_name):
+        for role in self.roles:
+            if role.name == role_name:
                 return True
         return False
 

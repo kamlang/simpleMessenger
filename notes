@@ -40,6 +40,10 @@ stream pour les converesations notification done
 fix admin panel especially user edit function done
 
 
+redis should also push the number of new messages.
+replace current user with "Me" when create new element
+
+
 #### refactor app models
 
 think about tests

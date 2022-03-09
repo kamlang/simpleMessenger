@@ -119,11 +119,17 @@ def conversation(conversation_id):
     form_add = addUserConversation()
     form_send = sendReply()
     page = request.args.get("page", 1, type=int)
+    mark_as_read = request.args.get("read",type=bool)
 
     conversation = Conversation.query.get(conversation_id)
     if not current_user.is_allowed_to_access(conversation):
         abort(403)
 
+    if mark_as_read: # to reset new_message count when user is already browsing the conversation
+        # reached via xhr
+        conversation.reset_unread_messages(current_user)
+        return Response(status=204)
+        
     if form_add.validate_on_submit(): 
         # Adding a list of user to a conversation. Only admin of a conversation can add a user.
         username_list = form_add.usernames.data.split()
@@ -141,7 +147,7 @@ def conversation(conversation_id):
     #    return Response(status=204)
         return redirect(url_for("main.conversation",conversation_id = conversation_id))
 
-
+    conversation.reset_unread_messages(current_user)
     users = conversation.users.all() # users ?
     messages = conversation.messages.paginate(
     page, current_app.config["POSTS_PER_PAGE"], False

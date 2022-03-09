@@ -14,12 +14,21 @@
 
   <div class="well well-sm" id="conversations">
     {%for conversation in conversations%}
-      <div class="well well-sm" id="conversation_{{conversation.id}}">
+    {% set unread_messages_count = current_user.number_of_unread_messages(conversation)%}
+        {%if unread_messages_count == 0 %}
+          <div class="well well-sm" id="conversation_{{conversation.id}}">
+        {%else%}
+         <div class="well well-sm" style="background-color:LightCoral;'" id="conversation_{{conversation.id}}">
+        {%endif%} 
       {% set last_message = conversation.messages.first() %}
       <span class="participants">Participants: 
         {%for user in conversation.users %}
           {%if current_user.username != user.username%}
-              <span class="participant">{{user.username}}</span>
+              <span class="participant">{{user.username}}
+              {%if unread_messages_count != 0 %}
+                <span class="unread_messages_count" style="float:right;">({{unread_messages_count}})</span>
+                {%endif%}
+              </span>
           {%else%} Me
           {%endif%} 
         {%endfor%}

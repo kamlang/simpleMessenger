@@ -34,7 +34,7 @@
       	<a href="{{url_for('auth.login')}}" class="nav-link">Login</a>
       </li>
       {%endif%}
-      {% if current_user.is_role(role='Admin') %}
+      {% if current_user.is_role(role_name='Admin') %}
       <li class="nav-item">
       	<a class="nav-link" href="{{url_for('restricted.showall')}}">Admin panel</a>
       </li>
