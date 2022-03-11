@@ -4,6 +4,7 @@ from flask_login import LoginManager
 from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
 from flask_moment import Moment
+from flask_uuid import FlaskUUID
 from config import config
 from flask import Flask
 from flask_bootstrap import Bootstrap
@@ -22,6 +23,7 @@ moment = Moment()
 bootstrap = Bootstrap()
 red = redis.StrictRedis()
 csrf = CSRFProtect()
+flask_uuid = FlaskUUID()
 
 def create_app(config_name):
     app = Flask(__name__)
@@ -34,6 +36,7 @@ def create_app(config_name):
     moment.init_app(app)
     csrf.init_app(app)
     bootstrap.init_app(app)
+    flask_uuid.init_app(app)
     # attach routes and custom error pages here
     from app.main import main as main_blueprint
     from app.auth import auth as auth_blueprint

@@ -3,6 +3,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import event
 from flask import current_app
 import os
+import uuid
 from datetime import datetime
 from app import db,login_manager
 
@@ -22,7 +23,7 @@ class UserRoles(db.Model):
 class ConversationUsers(db.Model):
     __tablename__ = "conversations_users"
     id = db.Column(db.Integer, primary_key=True)
-    converation_id = db.Column(
+    conversation_id = db.Column(
         db.Integer(), db.ForeignKey("conversations.id", ondelete="CASCADE")
     )
     user_id = db.Column(db.Integer(), db.ForeignKey("users.id", ondelete="CASCADE"))
@@ -54,7 +55,18 @@ class Conversation(db.Model):
     )
     admin_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    conversation_uuid = db.Column(db.String(100), unique=True)
 
+    def __init__(self,admin):
+        self.admin = admin
+        self.users.append(admin)
+        self.conversation_uuid = str(uuid.uuid4())
+        db.session.commit()
+    
+    @classmethod
+    def get_conversation_by_uuid(cls, conversation_uuid):
+        return cls.query.filter_by(conversation_uuid=str(conversation_uuid)).first()
+        
 
     def add_users(self,username_list):
         if current_user == self.admin: 
@@ -65,13 +77,13 @@ class Conversation(db.Model):
         else: 
             raise Exception("Only admin of a conversation can add users.")
 
-    def increment_unread_messages(self,user_list):
+    def _increment_unread_messages(self,user_list):
         for user in user_list:
-            q = ConversationUsers.query.filter_by(user_id=user.id,converation_id=self.id).first()
+            q = ConversationUsers.query.filter_by(user_id=user.id,conversation_id=self.id).first()
             q.unread_messages +=1
 
     def reset_unread_messages(self,user):
-        q=ConversationUsers.query.filter_by(user_id=user.id,converation_id=self.id).first()
+        q=ConversationUsers.query.filter_by(user_id=user.id,conversation_id=self.id).first()
         q.unread_messages = 0
         db.session.commit()
      
@@ -80,18 +92,10 @@ class Conversation(db.Model):
             self.timestamp = datetime.utcnow()
             self.messages.append(message)
             ## Add +1 to new message count for all users in the conversation
-            self.increment_unread_messages(self.users)
+            self._increment_unread_messages(self.users)
             db.session.commit()
         else: 
             raise Exception("Only user which are participants of a conversation can add message.")
-
-    @staticmethod 
-    def create_new(admin):
-        conversation = Conversation()
-        conversation.admin = admin
-        conversation.users.append(admin)
-        db.session.commit()
-        return conversation
 
 
 class Message(db.Model):
@@ -124,7 +128,7 @@ class User(db.Model, UserMixin):
     _avatar_hash = db.Column(db.String(32),default="default.png")
 
     def number_of_unread_messages(self,conversation):
-        q=ConversationUsers.query.filter_by(user_id=self.id,converation_id=conversation.id).first()
+        q=ConversationUsers.query.filter_by(user_id=self.id,conversation_id=conversation.id).first()
         return q.unread_messages
 
     def is_allowed_to_access(self,conversation):
@@ -133,7 +137,7 @@ class User(db.Model, UserMixin):
             return True
         return False
 
-    def get_conversations(self, page):
+    def get_all_conversations(self, page):
         conversations = (
             Conversation.query.filter(Conversation.users.contains(self))
             .order_by(Conversation.timestamp.desc())
@@ -196,7 +200,7 @@ class User(db.Model, UserMixin):
             flash("Please provide a valid image file")
 
 class AnonymousUser(AnonymousUserMixin):
-    def is_role(self, role):
+    def is_role(self, role_name):
         return False
 
 login_manager.anonymous_user = AnonymousUser

@@ -45,9 +45,9 @@
 
 <script>
   let csrf_token = "{{csrf_token()}}"
-  let conversation_id = "{{ conversation.id }}"
+  let conversation_uuid = "{{ conversation.conversation_uuid }}"
   let event_stream_url = "{{url_for('main.stream',username = current_user.username)}}"
-  document.addEventListener('DOMContentLoaded', sse_conversation(conversation_id,event_stream_url));
+  document.addEventListener('DOMContentLoaded', sse_conversation(conversation_uuid,event_stream_url));
   let all_participant_elements  =  document.querySelectorAll('.participant');
   document.addEventListener('DOMContentLoaded', set_participant_popover_events(all_participant_elements));
 </script>

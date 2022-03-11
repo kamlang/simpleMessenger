@@ -38,11 +38,15 @@ make a profile page with the possibility of uploading a picture done
 see error raised by wtfroms done
 stream pour les converesations notification done
 fix admin panel especially user edit function done
+replace current user with "Me" when create new element done
+redis should also push the number of new messages. done
+fix "converation" in ConversationUsers done
 
 
-redis should also push the number of new messages.
-replace current user with "Me" when create new element
-
+give the possibility to leave a group.
+give the ability to remove a message and a user
+uuid for conversation
+redis ssl
 
 #### refactor app models
 
@@ -67,10 +71,6 @@ add change password features
 
 infinite scroll json ?
 
-give the possibility to leave a group.
-give the ability to remove a message and a user
-uuid for conversation
-redis ssl
 
 validate url parameters
 maybe with werkzeug
@@ -84,7 +84,6 @@ try to upload something stupid
 
 
 setup https with let's encrypt
-create js so role when it changed
 set cookie params for timeout 
 create requirement.txt
 add search in notes feature
@@ -94,11 +93,7 @@ think of nice feature to implement and draw how they should look
 And create article then allow user to comment.
 newsletter functionallity
 
-
 Things to implement:
-
 description me, small cv, readings.
-
 page not confirmed show all remove submit label
-
 create dictionnary contain errors to get more consistency

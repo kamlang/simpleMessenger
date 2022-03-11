@@ -1,7 +1,9 @@
 {% extends "parent.html" %} {% block app_content %}
 <div class="well well-sm">
-	<a href={{url_for('auth.send_link',choice='confirmation')}}>Request a new account confimation link</a>.
+      <ul style="color:black;">
+        <li><a href={{url_for('auth.send_link',choice='confirmation')}}>Request a new account confimation link</a>.
 	<br>
-	<a href={{url_for('auth.send_link', choice='password_reset')}}>Request a password reset link</a>.
+	<li><a href={{url_for('auth.send_link', choice='password_reset')}}>Request a password reset link</a>.
+      </ul>
 </div>
 {% endblock %}    

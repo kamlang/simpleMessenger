@@ -14,26 +14,27 @@
 
   <div class="well well-sm" id="conversations">
     {%for conversation in conversations%}
-    {% set unread_messages_count = current_user.number_of_unread_messages(conversation)%}
-        {%if unread_messages_count == 0 %}
-          <div class="well well-sm" id="conversation_{{conversation.id}}">
-        {%else%}
-         <div class="well well-sm" style="background-color:LightCoral;'" id="conversation_{{conversation.id}}">
-        {%endif%} 
+      {% set unread_messages_count = current_user.number_of_unread_messages(conversation)%}
       {% set last_message = conversation.messages.first() %}
+        {%if unread_messages_count == 0 %}
+          <div class="well well-sm" id="conversation_{{conversation.conversation_uuid}}">
+        {%else%}
+         <div class="well well-sm" style="background-color:LightCoral;'" id="conversation_{{conversation.conversation_uuid}}">
+        {%endif%} 
       <span class="participants">Participants: 
         {%for user in conversation.users %}
           {%if current_user.username != user.username%}
-              <span class="participant">{{user.username}}
-              {%if unread_messages_count != 0 %}
-                <span class="unread_messages_count" style="float:right;">({{unread_messages_count}})</span>
-                {%endif%}
-              </span>
+          <span class="participant">{{user.username}}</span>
           {%else%} Me
           {%endif%} 
         {%endfor%}
       </span>
-      <a class="link_to_conversation" href ="{{url_for('main.conversation',conversation_id = conversation.id)}}" >
+          {%if unread_messages_count != 0 %}
+            <span class="unread_messages_count" style="float:right;">({{unread_messages_count}})</span>
+            {%else%}
+            <span class="unread_messages_count" style="float:right;"> </span>
+            {%endif%}
+      <a class="link_to_conversation" href ="{{url_for('main.conversation',conversation_uuid = conversation.conversation_uuid)}}" >
         <div class="well well-sm message_container" style="background-color: #ffffff;">
           {%if last_message %}
           <span class="sender"> From: {{last_message.sender.username}} </span>
@@ -59,6 +60,7 @@
       <a class="link_to_conversation" href ="">
         <div class="well well-sm message_container" style="background-color: #ffffff;">
           <span class="sender"></span>
+          <span class="unread_messages_count" style="float:right;"></span>
           <img class="avatar_message" src=""
           onerror="this.src='/static/avatars/default.png'">
           <small style="float: right;" class="timestamp"></small>

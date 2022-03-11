@@ -124,7 +124,7 @@ def confirm(token):
 @unauthenticated_required
 def send_link(choice):
     form = confirm_username()
-    form_name = {'password_reset':'Reset password','confirmation':'Resend confirmation link'}
+    form_name = {'password_reset':'Reset password','confirmation':'Send a new confirmation link'}
     if form.validate_on_submit():
         username = request.form["username"]
         user = User.query.filter_by(username=username).first_or_404()

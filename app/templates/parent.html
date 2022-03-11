@@ -9,7 +9,7 @@
 {% block scripts %}
     {{ super() }}
     {{ moment.include_moment() }}
-{% endblock %}
+   {% endblock %}
 </head>
 
 {% block navbar %}
@@ -43,7 +43,7 @@
     {%if current_user.username %}
     <ul class="nav navbar-nav navbar-right">
       <li class="nav-item navbar-right" align="right">
-	      <a class="navlink">Logged in as:  {{current_user.username}}</a>
+	      <a class="navlink">Logged in as:  {{current_user.username}}  </a>
       </li>
     </ul>
     {%endif%}
@@ -63,7 +63,7 @@
 	<script src"//getbootstrap.com/docs/4.0/assets/js/vendor/popper.min.js"></script>
   	<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
   	<script src="/static/script.js"></script>
-	{# application content needs to be provided in the app_content block #}
+        	{# application content needs to be provided in the app_content block #}
 	{%block app_content%}{%endblock%}
 {% endblock %}
 

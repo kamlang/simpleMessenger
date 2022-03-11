@@ -26,10 +26,9 @@ successMessage = "Operation succeed !"
 def admin_required(f):
     @wraps(f)
     def is_admin(**args):
-        if current_user.is_role(role="Admin"):
+        if current_user.is_role(role_name="Admin"):
             return f(**args)
         abort(403)
-
     return is_admin
 
 
