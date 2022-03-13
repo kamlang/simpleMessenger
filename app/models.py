@@ -62,10 +62,14 @@ class Conversation(db.Model):
         self.users.append(admin)
         self.conversation_uuid = str(uuid.uuid4())
         db.session.commit()
+
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
     
     @classmethod
     def get_conversation_by_uuid(cls, conversation_uuid):
-        return cls.query.filter_by(conversation_uuid=str(conversation_uuid)).first()
+        return cls.query.filter_by(conversation_uuid=str(conversation_uuid)).first_or_404()
         
 
     def add_users(self,username_list):
@@ -126,6 +130,7 @@ class User(db.Model, UserMixin):
     )
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
     _avatar_hash = db.Column(db.String(32),default="default.png")
+
 
     def number_of_unread_messages(self,conversation):
         q=ConversationUsers.query.filter_by(user_id=self.id,conversation_id=conversation.id).first()

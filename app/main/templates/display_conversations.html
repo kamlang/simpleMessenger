@@ -29,6 +29,9 @@
           {%endif%} 
         {%endfor%}
       </span>
+      {%if current_user == conversation.admin%}
+      <a class="delete-button" style="float:right;" title="Delete this conversation!" onclick="delete_conversation('{{conversation.conversation_uuid}}')">Delete</a>
+      {%endif%}
           {%if unread_messages_count != 0 %}
             <span class="unread_messages_count" style="float:right;">({{unread_messages_count}})</span>
             {%else%}
@@ -37,7 +40,8 @@
       <a class="link_to_conversation" href ="{{url_for('main.conversation',conversation_uuid = conversation.conversation_uuid)}}" >
         <div class="well well-sm message_container" style="background-color: #ffffff;">
           {%if last_message %}
-          <span class="sender"> From: {{last_message.sender.username}} </span>
+          <span class="sender"> From: {%if last_message.sender == current_user %} Me 
+                                      {%else%}{{last_message.sender.username}}{%endif%} </span>
           <img class="avatar_message" src="/static/avatars/{{ last_message.sender.avatar}}"
           onerror="this.src='/static/avatars/default.png'">
           <small style="float: right;" class="timestamp"> {{moment(conversation.timestamp).format('LLL')}}</small>

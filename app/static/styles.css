@@ -151,3 +151,8 @@ a[class*="link_to_conversation"]>*:hover
 {
   color:LightCoral;
 }
+
+a
+{
+ cursor:pointer; 
+}

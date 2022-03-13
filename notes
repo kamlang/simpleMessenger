@@ -41,14 +41,19 @@ fix admin panel especially user edit function done
 replace current user with "Me" when create new element done
 redis should also push the number of new messages. done
 fix "converation" in ConversationUsers done
-
+uuid for conversation done
+#### refactor app models done
 
 give the possibility to leave a group.
 give the ability to remove a message and a user
-uuid for conversation
 redis ssl
 
-#### refactor app models
+check csrf validation
+ask confirmation before deleting a conversation
+page reload doesn't work very well
+set some event type in redis
+to push thing like conversation_remove aor message remove event
+also change cursor on the delete button
 
 think about tests
 change is_role not pretty

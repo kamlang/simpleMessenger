@@ -29,6 +29,18 @@ from app import db
 from app.email import send_email
 from app import red
 
+def with_csrf_validation(view_func):
+    # Added to handle request send via xhr
+    @wraps(view_func)
+    def validating_csrf(*args,**kwargs):
+        csrf_token = request.headers.get('X-CSRFToken')
+        try: 
+            validate_csrf(csrf_token)
+        except Exception as e: 
+            raise e
+        return view_func(*args,**kwargs)
+    return validating_csrf
+
 ### Event Stream TODO:Move to a different bp.
 
 @stream_with_context
@@ -114,17 +126,28 @@ def conversations():
     )
 
 
-@main.route("/conversation/<uuid:conversation_uuid>/mark_as_read") # change to uuid
+@main.route("/conversation/<uuid:conversation_uuid>/delete")
 @login_required
+@with_csrf_validation
+def delete_conversation(conversation_uuid):
+    # Accessed via xhr to delete a conversation.
+    conversation = Conversation.get_conversation_by_uuid(conversation_uuid)
+    if current_user == conversation.admin:
+        conversation.delete()
+        return redirect(url_for("main.conversations"))
+    abort(403)
+
+
+@main.route("/conversation/<uuid:conversation_uuid>/mark_as_read") 
+@login_required
+@with_csrf_validation
 def mark_as_read(conversation_uuid):
-    # Accessed via xhr to mark the conversation as read when user is currently 
-#    conversation = Conversation.query.get(conversation_id) # get by uuid
+    # Accessed via xhr to mark the conversation as read when user is currently browsing it
     conversation = Conversation.get_conversation_by_uuid(conversation_uuid)
     if not current_user.is_allowed_to_access(conversation):
         abort(403)
     conversation.reset_unread_messages(current_user)
     return Response(status=204)
-
     
 @main.route("/conversation/<uuid:conversation_uuid>", methods=["GET", "POST"]) # change to uuid
 @login_required
@@ -133,7 +156,6 @@ def conversation(conversation_uuid):
     form_send = sendReply()
     page = request.args.get("page", 1, type=int)
 
-#    conversation = Conversation.query.get(conversation_id) # get by uuid
     conversation = Conversation.get_conversation_by_uuid(conversation_uuid)
     if not current_user.is_allowed_to_access(conversation):
         abort(403)
@@ -196,23 +218,17 @@ def conversation(conversation_uuid):
 Response is used to populate popovers when mouseover event is triggered in conversations."""
 @main.route("/getUserInfo/<username>")
 @login_required
+@with_csrf_validation
 def get_user_info(username):
-    csrf_token = request.headers.get('X-CSRFToken')
-    try :
-        validate_csrf(csrf_token)
-    except Exception as e:
-        raise e
     user = User.query.filter_by(username=username).first_or_404()
     # Has this will be injected directly into an html string we have to escape about_me which is an untrusted user input.
     return jsonify({ 'last_seen': user.last_seen,'about_me':escape(user.about_me),'avatar':user.avatar})
-
 
 @main.before_request
 def before_request():
     if current_user.is_authenticated:
         current_user.last_seen = datetime.utcnow()
         db.session.commit()
-
 
 @main.after_request
 def add_header_no_cache(response):
