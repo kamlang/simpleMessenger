@@ -29,68 +29,87 @@ from app import db
 from app.email import send_email
 from app import red
 
+
 def with_csrf_validation(view_func):
     # Added to handle request send via xhr
     @wraps(view_func)
-    def validating_csrf(*args,**kwargs):
-        csrf_token = request.headers.get('X-CSRFToken')
-        try: 
+    def validating_csrf(*args, **kwargs):
+        csrf_token = request.headers.get("X-CSRFToken")
+        try:
             validate_csrf(csrf_token)
-        except Exception as e: 
+        except Exception as e:
             raise e
-        return view_func(*args,**kwargs)
+        return view_func(*args, **kwargs)
+
     return validating_csrf
 
+
 ### Event Stream TODO:Move to a different bp.
+
 
 @stream_with_context
 def event_stream(username):
     pubsub = red.pubsub()
     pubsub.subscribe(username)
     for message in pubsub.listen():
-        if message['type']=='message':
-            yield 'retry:15000\ndata: %s\n\n' % message['data'].decode('utf-8')
+        if message["type"] == "message":
+            yield "retry:15000\ndata: %s\n\n" % message["data"].decode("utf-8")
 
-def push_message(conversation,content):
-    # push message to each user redis channel
+
+def push_message(conversation, content):
+    """Each time a user post a message in a conversation it's also pushed to the redis chanel
+    of each participants."""
     users = conversation.users.all()
     for user in users:
-        participants = ' '.join([ "Me" if user == user_ else user_.username for user_ in users ])
-        redis_message = {"event": "new_message", "from": current_user.username, "avatar_name":current_user.avatar,
-                "conversation_uuid":conversation.conversation_uuid,"content":content,"participants":participants,
-                "unread_messages":user.number_of_unread_messages(conversation)}
+        participants = " ".join(
+            ["Me" if user == user_ else user_.username for user_ in users]
+        )
+        redis_message = {
+            "event": "new_message",
+            "from": current_user.username,
+            "avatar_name": current_user.avatar,
+            "conversation_uuid": conversation.conversation_uuid,
+            "content": content,
+            "participants": participants,
+            "unread_messages": user.number_of_unread_messages(conversation),
+        }
         try:
             red.publish(user.username, str(redis_message))
         except:
             raise Exception("Pushing message to redis failed.")
 
 
-@main.route('/stream/<username>')
+@main.route("/stream/<username>")
 @login_required
-def stream(username): 
+def stream(username):
     if current_user.username == username:
-        response = Response(event_stream(username),
-                         mimetype="text/event-stream")
+        response = Response(event_stream(username), mimetype="text/event-stream")
         # Add custom headers to fix event stream timeout with nginx
-        response.headers['X-Accel-Buffering'] = 'no'
-        response.headers['Connection'] = 'keep-alive'
+        response.headers["X-Accel-Buffering"] = "no"
+        response.headers["Connection"] = "keep-alive"
         return response
     abort(403)
 
 
 ### Defining view functions
 
+
 @main.route("/")
 def home():
     if current_user.is_authenticated:
-        return redirect(url_for('main.conversations'))
+        return redirect(url_for("main.conversations"))
     return redirect(url_for("auth.login"))
 
-@main.route("/create_conversation", methods=["GET", "POST"])
+
+@main.route("/create_conversation")
 @login_required
 def new_conversation():
-    new_conversation = Conversation(admin = current_user)
-    return redirect(url_for("main.conversation",conversation_uuid = new_conversation.conversation_uuid))
+    new_conversation = Conversation(admin=current_user)
+    return redirect(
+        url_for(
+            "main.conversation", conversation_uuid=new_conversation.conversation_uuid
+        )
+    )
 
 
 @main.route("/conversations", methods=["GET", "POST"])
@@ -104,7 +123,7 @@ def conversations():
         if form.avatar.data:
             current_user.avatar = form.avatar.data
             db.session.commit()
-        return redirect(url_for('main.conversations'))
+        return redirect(url_for("main.conversations"))
     page = request.args.get("page", 1, type=int)
     conversations = current_user.get_all_conversations(page)
     next_url = (
@@ -138,18 +157,20 @@ def delete_conversation(conversation_uuid):
     abort(403)
 
 
-@main.route("/conversation/<uuid:conversation_uuid>/mark_as_read") 
+@main.route("/conversation/<uuid:conversation_uuid>/mark_as_read")
 @login_required
 @with_csrf_validation
 def mark_as_read(conversation_uuid):
-    # Accessed via xhr to mark the conversation as read when user is currently browsing it
+    """Accessed via xhr to mark the conversation as read when user is currently browsing it
+    also reset unread message count"""
     conversation = Conversation.get_conversation_by_uuid(conversation_uuid)
     if not current_user.is_allowed_to_access(conversation):
         abort(403)
     conversation.reset_unread_messages(current_user)
     return Response(status=204)
-    
-@main.route("/conversation/<uuid:conversation_uuid>", methods=["GET", "POST"]) # change to uuid
+
+
+@main.route("/conversation/<uuid:conversation_uuid>", methods=["GET", "POST"])
 @login_required
 def conversation(conversation_uuid):
     form_add = addUserConversation()
@@ -160,32 +181,36 @@ def conversation(conversation_uuid):
     if not current_user.is_allowed_to_access(conversation):
         abort(403)
 
-    if form_add.validate_on_submit(): 
+    if form_add.validate_on_submit():
         # Adding a list of user to a conversation. Only admin of a conversation can add a user.
         username_list = form_add.usernames.data.split()
         try:
             conversation.add_users(username_list)
         except:
             abort(403)
-        return redirect(url_for("main.conversation", conversation_uuid=conversation_uuid))
+        return redirect(
+            url_for("main.conversation", conversation_uuid=conversation_uuid)
+        )
 
-    if form_send.validate_on_submit(): # Adding message to a conversation
+    if form_send.validate_on_submit():  # Adding message to a conversation
         content = form_send.content.data
-        message = Message(sender=current_user,content=content)
+        message = Message(sender=current_user, content=content)
         conversation.add_message(message)
-        push_message(conversation,content)
-    #    return Response(status=204)
-        return redirect(url_for("main.conversation",conversation_uuid = conversation_uuid))
+        push_message(conversation, content)
+        #    return Response(status=204)
+        return redirect(
+            url_for("main.conversation", conversation_uuid=conversation_uuid)
+        )
 
     conversation.reset_unread_messages(current_user)
-    users = conversation.users.all() # users ?
+    users = conversation.users.all()  # users ?
     messages = conversation.messages.paginate(
-    page, current_app.config["POSTS_PER_PAGE"], False
+        page, current_app.config["POSTS_PER_PAGE"], False
     )
     admin = conversation.admin.username
     next_url = (
-    url_for(
-        "main.conversation",
+        url_for(
+            "main.conversation",
             conversation_uuid=conversation_uuid,
             page=messages.next_num,
         )
@@ -214,21 +239,28 @@ def conversation(conversation_uuid):
     )
 
 
-""" Route which take a username as parameter and return a json response.
-Response is used to populate popovers when mouseover event is triggered in conversations."""
 @main.route("/getUserInfo/<username>")
 @login_required
 @with_csrf_validation
 def get_user_info(username):
+    # This is used to populate popovers when mouseover event is triggered in conversations.
     user = User.query.filter_by(username=username).first_or_404()
     # Has this will be injected directly into an html string we have to escape about_me which is an untrusted user input.
-    return jsonify({ 'last_seen': user.last_seen,'about_me':escape(user.about_me),'avatar':user.avatar})
+    return jsonify(
+        {
+            "last_seen": user.last_seen,
+            "about_me": escape(user.about_me),
+            "avatar": user.avatar,
+        }
+    )
+
 
 @main.before_request
 def before_request():
     if current_user.is_authenticated:
         current_user.last_seen = datetime.utcnow()
         db.session.commit()
+
 
 @main.after_request
 def add_header_no_cache(response):

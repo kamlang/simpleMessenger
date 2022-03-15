@@ -5,7 +5,8 @@ from flask import current_app
 import os
 import uuid
 from datetime import datetime
-from app import db,login_manager
+from app import db, login_manager
+
 
 class Role(db.Model):
     __tablename__ = "roles"
@@ -27,8 +28,7 @@ class ConversationUsers(db.Model):
         db.Integer(), db.ForeignKey("conversations.id", ondelete="CASCADE")
     )
     user_id = db.Column(db.Integer(), db.ForeignKey("users.id", ondelete="CASCADE"))
-    unread_messages = db.Column(db.Integer(),default=0)
-
+    unread_messages = db.Column(db.Integer(), default=0) # TODO: change to a better name
 
 
 class ConversationMessages(db.Model):
@@ -57,7 +57,7 @@ class Conversation(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     conversation_uuid = db.Column(db.String(100), unique=True)
 
-    def __init__(self,admin):
+    def __init__(self, admin):
         self.admin = admin
         self.users.append(admin)
         self.conversation_uuid = str(uuid.uuid4())
@@ -66,40 +66,47 @@ class Conversation(db.Model):
     def delete(self):
         db.session.delete(self)
         db.session.commit()
-    
+
     @classmethod
     def get_conversation_by_uuid(cls, conversation_uuid):
-        return cls.query.filter_by(conversation_uuid=str(conversation_uuid)).first_or_404()
-        
+        return cls.query.filter_by(
+            conversation_uuid=str(conversation_uuid)
+        ).first_or_404()
 
-    def add_users(self,username_list):
-        if current_user == self.admin: 
+    def add_users(self, username_list):
+        if current_user == self.admin:
             for username in username_list:
                 user = User.query.filter_by(username=username).first()
                 self.users.append(user)
             db.session.commit()
-        else: 
+        else:
             raise Exception("Only admin of a conversation can add users.")
 
-    def _increment_unread_messages(self,user_list):
+    def _increment_unread_messages(self, user_list):
         for user in user_list:
-            q = ConversationUsers.query.filter_by(user_id=user.id,conversation_id=self.id).first()
-            q.unread_messages +=1
+            q = ConversationUsers.query.filter_by(
+                user_id=user.id, conversation_id=self.id
+            ).first()
+            q.unread_messages += 1
 
-    def reset_unread_messages(self,user):
-        q=ConversationUsers.query.filter_by(user_id=user.id,conversation_id=self.id).first()
+    def reset_unread_messages(self, user):
+        q = ConversationUsers.query.filter_by(
+            user_id=user.id, conversation_id=self.id
+        ).first()
         q.unread_messages = 0
         db.session.commit()
-     
-    def add_message(self,message):
+
+    def add_message(self, message):
         if current_user in self.users:
             self.timestamp = datetime.utcnow()
             self.messages.append(message)
-            ## Add +1 to new message count for all users in the conversation
+            # Add +1 to new message count for all users in the conversation
             self._increment_unread_messages(self.users)
             db.session.commit()
-        else: 
-            raise Exception("Only user which are participants of a conversation can add message.")
+        else:
+            raise Exception(
+                "Only user which are participants of a conversation can add message."
+            )
 
 
 class Message(db.Model):
@@ -121,7 +128,7 @@ class User(db.Model, UserMixin):
     about_me = db.Column(db.String(140))
     messages_sent = db.relationship(
         "Message", foreign_keys="Message.sender_id", backref="sender", lazy="dynamic"
-    )
+        ) # TODO: change to a better name
     conversations = db.relationship(
         "Conversation",
         foreign_keys="Conversation.admin_id",
@@ -129,14 +136,15 @@ class User(db.Model, UserMixin):
         lazy="dynamic",
     )
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
-    _avatar_hash = db.Column(db.String(32),default="default.png")
+    _avatar_hash = db.Column(db.String(32), default="default.png")
 
-
-    def number_of_unread_messages(self,conversation):
-        q=ConversationUsers.query.filter_by(user_id=self.id,conversation_id=conversation.id).first()
+    def number_of_unread_messages(self, conversation):
+        q = ConversationUsers.query.filter_by(
+            user_id=self.id, conversation_id=conversation.id
+        ).first()
         return q.unread_messages
 
-    def is_allowed_to_access(self,conversation):
+    def is_allowed_to_access(self, conversation):
         allowed_users = conversation.users.all()
         if self in allowed_users:
             return True
@@ -183,7 +191,7 @@ class User(db.Model, UserMixin):
         return self._avatar_hash
 
     @avatar.setter
-    def avatar(self,avatar_data):
+    def avatar(self, avatar_data):
 
         import hashlib
         from PIL import Image
@@ -195,7 +203,7 @@ class User(db.Model, UserMixin):
             image2.putdata(data)
             filename = hashlib.md5(self.username.encode())
             self._avatar_hash = filename.hexdigest()
-            
+
             image2.thumbnail((128, 128))
             image2.save(
                 os.path.join(current_app.config["UPLOAD_FOLDER"], filename.hexdigest()),
@@ -204,11 +212,14 @@ class User(db.Model, UserMixin):
         except:
             flash("Please provide a valid image file")
 
+
 class AnonymousUser(AnonymousUserMixin):
     def is_role(self, role_name):
         return False
 
+
 login_manager.anonymous_user = AnonymousUser
+
 
 @login_manager.user_loader
 def load_user(id):
