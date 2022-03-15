@@ -22,7 +22,7 @@
     <span style="float: right;">Admin: {{ admin }}</span>
     <div class="well well-sm" id="conversation_container">
       {%if not messages %} 
-        <div class="well well-sm message_container" style="background-color: #ffffff;">
+        <div class="well well-sm message_container">
           <span class="sender"> </span>
           <img class="avatar_message" src= ""  hidden>
           <small style="float: right;" class="timestamp"> </small>
@@ -30,7 +30,7 @@
         </div>
       {%endif%}
       {%for message in messages %}
-        <div class="well well-sm message_container" style="background-color: #ffffff;">
+        <div class="well well-sm message_container">
           <span class="sender">From: {{message.sender.username}}</span>
           <img class="avatar_message" src="/static/avatars/{{message.sender.avatar}}">
           <small style="float: right;" class="timestamp"> {{moment(message.timestamp).format('LLL')}}</small>

@@ -19,7 +19,7 @@
         {%if unread_messages_count == 0 %}
           <div class="well well-sm" id="conversation_{{conversation.conversation_uuid}}">
         {%else%}
-         <div class="well well-sm" style="background-color:LightCoral;'" id="conversation_{{conversation.conversation_uuid}}">
+         <div class="well well-sm has-new-message" id="conversation_{{conversation.conversation_uuid}}">
         {%endif%} 
       <span class="participants">Participants: 
         {%for user in conversation.users %}
@@ -30,8 +30,11 @@
         {%endfor%}
       </span>
       {%if current_user == conversation.admin%}
-      <a class="delete-button" style="float:right;" title="Delete this conversation!" onclick="delete_conversation('{{conversation.conversation_uuid}}')">Delete</a>
+      <a class="delete-button" style="float:right;" title="Delete this conversation!"
+        onclick="trigger_action('{{conversation.conversation_uuid}}','delete')">Delete</a>
       {%endif%}
+      <a class="leave-button" style="float:right;" title="Leave this conversation!"
+        onclick="trigger_action('{{conversation.conversation_uuid}}','leave')">Leave</a>
           {%if unread_messages_count != 0 %}
             <span class="unread_messages_count" style="float:right;">({{unread_messages_count}})</span>
             {%else%}

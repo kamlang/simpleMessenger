@@ -73,6 +73,12 @@ class Conversation(db.Model):
             conversation_uuid=str(conversation_uuid)
         ).first_or_404()
 
+    def remove_user(self,user):
+        self.users.remove(user)
+        if self.admin == user:
+            self.admin = self.users[0]
+        db.session.commit()
+
     def add_users(self, username_list):
         if current_user == self.admin:
             for username in username_list:

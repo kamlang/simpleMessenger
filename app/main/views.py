@@ -157,6 +157,19 @@ def delete_conversation(conversation_uuid):
     abort(403)
 
 
+@main.route("/conversation/<uuid:conversation_uuid>/leave")
+@login_required
+@with_csrf_validation
+def leave_conversation(conversation_uuid):
+    """ Accessed via xhr to leave a conversation, 
+    if admin leaves then he's replaced by the older user in the conversation """
+    conversation = Conversation.get_conversation_by_uuid(conversation_uuid)
+    if current_user.is_allowed_to_access(conversation):
+        conversation.remove_user(current_user)
+        return redirect(url_for("main.conversations"))
+    abort(403)
+
+
 @main.route("/conversation/<uuid:conversation_uuid>/mark_as_read")
 @login_required
 @with_csrf_validation
@@ -164,10 +177,10 @@ def mark_as_read(conversation_uuid):
     """Accessed via xhr to mark the conversation as read when user is currently browsing it
     also reset unread message count"""
     conversation = Conversation.get_conversation_by_uuid(conversation_uuid)
-    if not current_user.is_allowed_to_access(conversation):
-        abort(403)
-    conversation.reset_unread_messages(current_user)
-    return Response(status=204)
+    if current_user.is_allowed_to_access(conversation):
+        conversation.reset_unread_messages(current_user)
+        return Response(status=204)
+    abort(403)
 
 
 @main.route("/conversation/<uuid:conversation_uuid>", methods=["GET", "POST"])
@@ -182,7 +195,7 @@ def conversation(conversation_uuid):
         abort(403)
 
     if form_add.validate_on_submit():
-        # Adding a list of user to a conversation. Only admin of a conversation can add a user.
+        # Add a list of user to a conversation. Only admin of a conversation can add a user.
         username_list = form_add.usernames.data.split()
         try:
             conversation.add_users(username_list)

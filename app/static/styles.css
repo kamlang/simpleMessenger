@@ -1,5 +1,8 @@
 :root {
   --fg-black: #666666;
+  --bg-conversation: #607d8b;
+  --bg-conversation-new: #8bc34a;
+  --fg-notification: #8bc34a;
 }
 
 table
@@ -58,11 +61,27 @@ div[id*="conversation_"]
 {
   color:white;
   visibility: visible;
-  background-color:LightSteelBlue;
+  background-color:var(--bg-conversation);
   z-index:2;
   margin:5px;
   padding:5px;
   border-radius: 10px;
+}
+
+div[id*="conversation_"].has-new-message
+{
+  color:white;
+  visibility: visible;
+  background-color:var(--bg-conversation-new);
+  z-index:2;
+  margin:5px;
+  padding:5px;
+  border-radius: 10px;
+}
+
+div[id*="conversation_"] a
+{
+  color:white;
 }
 
 .avatar_message
@@ -146,13 +165,12 @@ a[class*="link_to_conversation"]>*:hover
 #content {
   resize:none;
 }
-
-.new_messages_count
+.new-message-count
 {
-  color:LightCoral;
+  color:var(--fg-notification);
 }
-
 a
 {
  cursor:pointer; 
+ padding-left: 10px;
 }
