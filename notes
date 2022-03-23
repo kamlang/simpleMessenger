@@ -4,7 +4,7 @@ next transfer everything to WTFforms done
 put a logout button  done
 check csrf token done
 auto increment id for user db ok
-create and admin panel to remove user done
+create an admin panel to remove user done
 put a message like you're currently log as user (would require to check each time a page is loaded ? done
 implement user roles done
 menu role link to access dictionnary done
@@ -42,18 +42,38 @@ replace current user with "Me" when create new element done
 redis should also push the number of new messages. done
 fix "converation" in ConversationUsers done
 uuid for conversation done
-#### refactor app models done
+give the possibility to leave a group. done
+ask confirmation before deleting a conversation done
+also change cursor on the delete button done
+refactor app models done
 
-give the possibility to leave a group.
+#### 
+
+doc API
+fix API message push to redis; move stream func to another bp
+implement custom exception
+refactor js
 give the ability to remove a message and a user
+validating password with regex.
+build api to get message, and send message
+prevent bruteforce attack
+secure file upload checking mime type ?
+try to upload something stupid
+
+#####
+
+deploy on heroku
+but before push the thing to github
+create requirement.txt
+
+####
+
 redis ssl
 
 check csrf validation
-ask confirmation before deleting a conversation
 page reload doesn't work very well
 set some event type in redis
 to push thing like conversation_remove aor message remove event
-also change cursor on the delete button
 
 think about tests
 change is_role not pretty
@@ -76,21 +96,17 @@ add change password features
 
 infinite scroll json ?
 
-
 validate url parameters
 maybe with werkzeug
 
-validating password with regex.
 setup email messages
 design a form to send a message
-prevent bruteforce attack
-secure file upload checking mime type ?
-try to upload something stupid
-
 
 setup https with let's encrypt
 set cookie params for timeout 
-create requirement.txt
+
+###
+
 add search in notes feature
 
 think of nice feature to implement and draw how they should look

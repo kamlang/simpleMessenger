@@ -43,7 +43,7 @@ td, th
   padding:5px;
 }
 
-#conversation_container
+#conversation-container
 {
   max-height:600px;
   overflow:auto;
@@ -79,7 +79,7 @@ div[id*="conversation_"].has-new-message
   border-radius: 10px;
 }
 
-div[id*="conversation_"] a
+div[id*="conversation_"]>a
 {
   color:white;
 }

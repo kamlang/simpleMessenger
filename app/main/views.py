@@ -216,11 +216,12 @@ def conversation(conversation_uuid):
         )
 
     conversation.reset_unread_messages(current_user)
-    users = conversation.users.all()  # users ?
+    users = conversation.users.all() 
     messages = conversation.messages.paginate(
         page, current_app.config["POSTS_PER_PAGE"], False
     )
     admin = conversation.admin.username
+    # TODO: fix duplicate code
     next_url = (
         url_for(
             "main.conversation",

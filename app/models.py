@@ -1,4 +1,5 @@
 from flask_login import UserMixin, AnonymousUserMixin, current_user
+from flask import url_for
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import event
 from flask import current_app
@@ -6,6 +7,82 @@ import os
 import uuid
 from datetime import datetime
 from app import db, login_manager
+
+class UserApiMixin():
+    data = {}
+    data["items"] = [] 
+    data["links"] = [
+        "/api/user/getUnreadMessages",
+        "/api/user/setStatus",
+        "/api/user/setAvatar",
+        "/api/conversation/<conversation_uuid>/addMessage",
+        "/api/conversation/<conversation_uuid>/getMessages",
+        "/api/conversation/<conversation_uuid>/delete",
+        "/api/conversation/<conversation_uuid>/addUsers",
+        "/api/conversation/<conversation_uuid>/leave",
+        "/api/user/getAllConversation"]
+
+    def api_get_unread_messages(self):
+        """ Return a list containing all the unread messages of a user. Each message is
+        represented as a dictionary. Not really satisfied with that. """
+        if isinstance(self,User):
+            conversation_users = ConversationUsers.query.join(
+                Conversation, Conversation.id == ConversationUsers.conversation_id
+                ).filter(ConversationUsers.user_id == self.id,
+                ConversationUsers.unread_messages > 0).all()
+            if not conversation_users:
+                return {}
+
+            for item in conversation_users:
+                conversation = Conversation.query.get(item.conversation_id)
+                unread_messages = conversation.messages.all()[:item.unread_messages]
+                for unread_message in unread_messages:
+                    message = _message_to_dict(unread_message)
+                    UserApiMixin.data["items"].append(message)
+            return UserApiMixin.data
+    
+    def _message_to_dict(message):
+        message_dict = {}
+        message_dict["From"] = User.query.get(message.sender_id).username
+        message_dict["Content"] = message.content
+        message_dict["Time"] = message.timestamp
+        return message_dict
+    
+    def api_set_status(self,text_status):
+        if isinstance(self,User):
+            self.about_me = text_status
+            db.session.commit() 
+            UserApiMixin.data["message"] =  "Status has been successfully updated"
+            return UserApiMixin.data
+
+    def api_add_message_to_conversation(self,conversation_uuid,message_content):
+        """ Need to be fixed, conversation.add_message depend on current_user."""
+        conversation = Conversation.get_conversation_by_uuid(conversation_uuid)
+        message = Message(content=message_content,sender_id=self.id)
+        try:
+            conversation.add_message(message)
+        except Exception as e: # TODO: This need to be changed to handle custom exception
+            UserApiMixin.data["message"] = "An error happened: " + e.args[0]
+            return UserApiMixin.data
+        UserApiMixin.data["message"] = "Message has been successfully added to the conversation"
+        return UserApiMixin.data
+
+    def api_get_messages(self,conversation_uuid,page):
+        conversation = Conversation.get_conversation_by_uuid(conversation_uuid)
+        messages = conversation.messages.paginate(
+        page,15, False)
+        for message in messages.items:
+            message = UserApiMixin._message_to_dict(message)
+            UserApiMixin.data["items"].append(message)
+            UserApiMixin.data["next"] =  (url_for(
+            "api.get_messages",
+            conversation_uuid=conversation_uuid,
+            page=messages.next_num,
+            )
+            if messages.has_next
+            else None
+            )
+        return UserApiMixin.data
 
 
 class Role(db.Model):
@@ -123,11 +200,12 @@ class Message(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 
-class User(db.Model, UserMixin):
+class User(db.Model, UserMixin, UserApiMixin):
     __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(20), unique=True)
     password_hash = db.Column(db.String(100))
+    api_key = db.Column(db.String(100),default=None)
     email = db.Column(db.String(155))
     roles = db.relationship("Role", secondary="user_roles")
     confirmed = db.Column(db.Boolean, default=False)
