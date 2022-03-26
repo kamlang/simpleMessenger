@@ -27,7 +27,7 @@
         {%for user in conversation.users %}
           {%if current_user.username != user.username%}
           <span class="participant">{{user.username}}</span>
-          {%else%} Me
+          {%else%}Me
           {%endif%} 
         {%endfor%}
       </span>
