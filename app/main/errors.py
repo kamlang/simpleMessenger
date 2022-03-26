@@ -1,22 +1,16 @@
-from flask import render_template
+from flask import render_template, request, jsonify
 from app.main import main
 from app.models import db
+from werkzeug.exceptions import HTTPException
 
-### Adding error handler
-
-
-@main.app_errorhandler(404)
-def not_found_error(error):
-    return render_template("404.html"), 404
-
-
-@main.app_errorhandler(403)
-def not_found_error(error):
-    return render_template("403.html"), 403
-
-
-@main.app_errorhandler(500)
-def internal_error(error):
-#    db.session.rollback()
-    return render_template("500.html"), 500
-
+@main.app_errorhandler(HTTPException)
+def handle_exception(e):
+    if "api" in request.blueprints:
+        error_message = {
+        "code": e.code,
+        "name": e.name,
+        "description": e.description,
+        }
+        return jsonify(error_message), e.code
+    else:
+        return render_template("error.html",error = e), e.code

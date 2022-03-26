@@ -39,13 +39,13 @@ class UserApiMixin():
                 # only get the the last nth unread messages
                 unread_messages = conversation.messages.all()[:item.unread_messages]
                 for unread_message in unread_messages:
-                    message = _message_to_dict(unread_message)
+                    message = UserApiMixin._message_to_dict(unread_message)
                     UserApiMixin.data["items"].append(message)
             return UserApiMixin.data
     
     def _message_to_dict(message):
         message_dict = {}
-        message_dict["From"] = message.sender
+        message_dict["From"] = message.sender.username
         message_dict["Content"] = message.content
         message_dict["Time"] = message.timestamp
         return message_dict
@@ -325,13 +325,6 @@ class User(db.Model, UserMixin, UserApiMixin):
 
 
 class AnonymousUser(AnonymousUserMixin):
+    # To avoid error when calling some method as unauthenticated user.
     def is_role(self, role_name):
         return False
-
-
-login_manager.anonymous_user = AnonymousUser
-
-
-@login_manager.user_loader
-def load_user(id):
-    return User.query.get(id)
