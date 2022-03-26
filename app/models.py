@@ -31,10 +31,12 @@ class UserApiMixin():
                 ).filter(ConversationUsers.user_id == self.id,
                 ConversationUsers.unread_messages > 0).all()
             if not conversation_users:
-                return {}
+                UserApiMixin.data["message"] =  "You don'have unread messages"
+                return UserApiMixin.data
 
             for item in conversation_users:
                 conversation = Conversation.query.get(item.conversation_id)
+                # only get the the last nth unread messages
                 unread_messages = conversation.messages.all()[:item.unread_messages]
                 for unread_message in unread_messages:
                     message = _message_to_dict(unread_message)
@@ -43,20 +45,19 @@ class UserApiMixin():
     
     def _message_to_dict(message):
         message_dict = {}
-        message_dict["From"] = User.query.get(message.sender_id).username
+        message_dict["From"] = message.sender
         message_dict["Content"] = message.content
         message_dict["Time"] = message.timestamp
         return message_dict
     
-    def api_set_status(self,text_status):
+    def api_set_about_me(self,content):
         if isinstance(self,User):
-            self.about_me = text_status
+            self.about_me = content
             db.session.commit() 
             UserApiMixin.data["message"] =  "Status has been successfully updated"
             return UserApiMixin.data
 
     def api_add_message_to_conversation(self,conversation_uuid,message_content):
-        """ Need to be fixed, conversation.add_message depend on current_user."""
         conversation = Conversation.get_conversation_by_uuid(conversation_uuid)
         message = Message(content=message_content,sender_id=self.id)
         try:
@@ -83,6 +84,26 @@ class UserApiMixin():
             else None
             )
         return UserApiMixin.data
+    
+    def api_delete_message(self,conversation_uuid):
+        conversation = Conversation.get_conversation_by_uuid(conversation_uuid)
+        try:
+            conversation.delete()
+            UserApiMixin.data["message"] = "Conversation has been successfully deleted."
+            return UserApiMixin.data
+        except Exception as e :
+            UserApiMixin.data["message"] = "An error happened: " + e.args[0]
+            return UserApiMixin.data
+
+    def api_add_users(self,conversation_uuid,username_list):
+        conversation = Conversation.get_conversation_by_uuid(conversation_uuid)
+        try: 
+            conversation.add_users(username_list)
+            UserApiMixin.data["message"] = "All users have been added to the conversation."
+            return UserApiMixin.data
+        except Exception as e:
+            UserApiMixin.data["message"] = "An error happened: " + e.args[0]
+            return UserApiMixin.data
 
 
 class Role(db.Model):
@@ -134,15 +155,18 @@ class Conversation(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     conversation_uuid = db.Column(db.String(100), unique=True)
 
-    def __init__(self, admin):
-        self.admin = admin
-        self.users.append(admin)
+    def __init__(self):
+        self.admin = current_user
+        self.users.append(current_user)
         self.conversation_uuid = str(uuid.uuid4())
         db.session.commit()
 
     def delete(self):
-        db.session.delete(self)
-        db.session.commit()
+        if current_user == self.admin:
+            db.session.delete(self)
+            db.session.commit()
+        else:
+            raise Exception("Only the admin of a conversation can delete it")
 
     @classmethod
     def get_conversation_by_uuid(cls, conversation_uuid):
@@ -150,17 +174,27 @@ class Conversation(db.Model):
             conversation_uuid=str(conversation_uuid)
         ).first_or_404()
 
-    def remove_user(self,user):
-        self.users.remove(user)
-        if self.admin == user:
-            self.admin = self.users[0]
-        db.session.commit()
+    def remove_user(self):
+        """ When a user choose to leave a conversation it has to be removed from it.
+        if admin left it is replaced with the user which belong to the group for the longest time."""
+        if current_user in self.users:
+            self.users.remove(user)
+            if self.admin == current_user:
+                self.admin = self.users[0]
+            db.session.commit()
+        else:
+            raise Exception("Only a user which belongs to this conversation can be removed")
+
+
 
     def add_users(self, username_list):
         if current_user == self.admin:
             for username in username_list:
                 user = User.query.filter_by(username=username).first()
-                self.users.append(user)
+                if user:
+                    self.users.append(user)
+                else:
+                    raise Exception ("User "+ user + " does not exist.")
             db.session.commit()
         else:
             raise Exception("Only admin of a conversation can add users.")
@@ -172,10 +206,10 @@ class Conversation(db.Model):
             ).first()
             q.unread_messages += 1
 
-    def reset_unread_messages(self, user):
+    def reset_unread_messages(self):
         q = ConversationUsers.query.filter_by(
-            user_id=user.id, conversation_id=self.id
-        ).first()
+        user_id=current_user.id, conversation_id=self.id
+        ).first_or_404()
         q.unread_messages = 0
         db.session.commit()
 
@@ -188,7 +222,7 @@ class Conversation(db.Model):
             db.session.commit()
         else:
             raise Exception(
-                "Only user which are participants of a conversation can add message."
+                "Only users which are participants of a conversation can add message."
             )
 
 
@@ -222,17 +256,11 @@ class User(db.Model, UserMixin, UserApiMixin):
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
     _avatar_hash = db.Column(db.String(32), default="default.png")
 
-    def number_of_unread_messages(self, conversation):
+    def get_number_of_unread_messages(self, conversation):
         q = ConversationUsers.query.filter_by(
             user_id=self.id, conversation_id=conversation.id
         ).first()
         return q.unread_messages
-
-    def is_allowed_to_access(self, conversation):
-        allowed_users = conversation.users.all()
-        if self in allowed_users:
-            return True
-        return False
 
     def get_all_conversations(self, page):
         conversations = (
@@ -287,7 +315,6 @@ class User(db.Model, UserMixin, UserApiMixin):
             image2.putdata(data)
             filename = hashlib.md5(self.username.encode())
             self._avatar_hash = filename.hexdigest()
-
             image2.thumbnail((128, 128))
             image2.save(
                 os.path.join(current_app.config["UPLOAD_FOLDER"], filename.hexdigest()),

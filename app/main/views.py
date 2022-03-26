@@ -43,7 +43,6 @@ def with_csrf_validation(view_func):
 
     return validating_csrf
 
-
 ### Event Stream TODO:Move to a different bp.
 
 
@@ -71,7 +70,7 @@ def push_message(conversation, content):
             "conversation_uuid": conversation.conversation_uuid,
             "content": content,
             "participants": participants,
-            "unread_messages": user.number_of_unread_messages(conversation),
+            "unread_messages": user.get_number_of_unread_messages(conversation),
         }
         try:
             red.publish(user.username, str(redis_message))
@@ -104,7 +103,7 @@ def home():
 @main.route("/create_conversation")
 @login_required
 def new_conversation():
-    new_conversation = Conversation(admin=current_user)
+    new_conversation = Conversation()
     return redirect(
         url_for(
             "main.conversation", conversation_uuid=new_conversation.conversation_uuid
@@ -126,6 +125,7 @@ def conversations():
         return redirect(url_for("main.conversations"))
     page = request.args.get("page", 1, type=int)
     conversations = current_user.get_all_conversations(page)
+
     next_url = (
         url_for("main.conversations", page=conversations.next_num)
         if conversations.has_next
@@ -151,23 +151,24 @@ def conversations():
 def delete_conversation(conversation_uuid):
     # Accessed via xhr to delete a conversation.
     conversation = Conversation.get_conversation_by_uuid(conversation_uuid)
-    if current_user == conversation.admin:
+    try:
         conversation.delete()
         return redirect(url_for("main.conversations"))
-    abort(403)
+    except:
+        abort(403)
 
 
 @main.route("/conversation/<uuid:conversation_uuid>/leave")
 @login_required
 @with_csrf_validation
 def leave_conversation(conversation_uuid):
-    """ Accessed via xhr to leave a conversation, 
-    if admin leaves then he's replaced by the older user in the conversation """
+    # Accessed via xhr to leave a conversation.
     conversation = Conversation.get_conversation_by_uuid(conversation_uuid)
-    if current_user.is_allowed_to_access(conversation):
-        conversation.remove_user(current_user)
+    try:
+        conversation.remove_user()
         return redirect(url_for("main.conversations"))
-    abort(403)
+    except:
+        abort(403)
 
 
 @main.route("/conversation/<uuid:conversation_uuid>/mark_as_read")
@@ -177,10 +178,11 @@ def mark_as_read(conversation_uuid):
     """Accessed via xhr to mark the conversation as read when user is currently browsing it
     also reset unread message count"""
     conversation = Conversation.get_conversation_by_uuid(conversation_uuid)
-    if current_user.is_allowed_to_access(conversation):
-        conversation.reset_unread_messages(current_user)
+    try:
+        conversation.reset_unread_messages()
         return Response(status=204)
-    abort(403)
+    except:
+        abort(403)
 
 
 @main.route("/conversation/<uuid:conversation_uuid>", methods=["GET", "POST"])
@@ -191,7 +193,7 @@ def conversation(conversation_uuid):
     page = request.args.get("page", 1, type=int)
 
     conversation = Conversation.get_conversation_by_uuid(conversation_uuid)
-    if not current_user.is_allowed_to_access(conversation):
+    if not current_user in conversation.users:
         abort(403)
 
     if form_add.validate_on_submit():
@@ -215,7 +217,7 @@ def conversation(conversation_uuid):
             url_for("main.conversation", conversation_uuid=conversation_uuid)
         )
 
-    conversation.reset_unread_messages(current_user)
+    conversation.reset_unread_messages()
     users = conversation.users.all() 
     messages = conversation.messages.paginate(
         page, current_app.config["POSTS_PER_PAGE"], False

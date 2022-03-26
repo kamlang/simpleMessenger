@@ -5,16 +5,18 @@
 
   {%set _csrf_token = csrf_token()%}
   <div class="well well-sm" id="status">
-    {{ wtf.quick_form(form,form_type="inline",id="profile_form") }}
-    <span id="current_status"><i>  {{ current_user.about_me }}</i> </span>
-    <a href="{{url_for('main.new_conversation')}}" style="float:right;">Start a new conversation</a>
     <img title="Click to change your avatar!" class="current_avatar"
     src="/static/avatars/{{current_user.avatar}}" onerror="this.src='/static/avatars/default.png'">
-  </div>
+    <a href="{{url_for('main.new_conversation')}}" style="float:right;">
+      <span class="glyphicon glyphicon-plus" title="Create a new conversation"></span>
+    </a>
+    {{ wtf.quick_form(form,form_type="inline",id="profile_form") }}
+
+          </div>
 
   <div class="well well-sm" id="conversations">
     {%for conversation in conversations%}
-      {% set unread_messages_count = current_user.number_of_unread_messages(conversation)%}
+      {% set unread_messages_count = current_user.get_number_of_unread_messages(conversation)%}
       {% set last_message = conversation.messages.first() %}
         {%if unread_messages_count == 0 %}
           <div class="well well-sm" id="conversation_{{conversation.conversation_uuid}}">
@@ -31,10 +33,14 @@
       </span>
       {%if current_user == conversation.admin%}
       <a class="delete-button" style="float:right;" title="Delete this conversation!"
-        onclick="trigger_action('{{conversation.conversation_uuid}}','delete')">Delete</a>
+        onclick="trigger_action('{{conversation.conversation_uuid}}','delete')">
+          <span class="glyphicon glyphicon-remove"></span>
+      </a>
       {%endif%}
       <a class="leave-button" style="float:right;" title="Leave this conversation!"
-        onclick="trigger_action('{{conversation.conversation_uuid}}','leave')">Leave</a>
+        onclick="trigger_action('{{conversation.conversation_uuid}}','leave')">
+        <span class="glyphicon glyphicon-minus"></span>
+      </a>
           {%if unread_messages_count != 0 %}
             <span class="unread_messages_count" style="float:right;">({{unread_messages_count}})</span>
             {%else%}
@@ -56,8 +62,8 @@
       </a>
       </div>
     {%endfor%}
-    {%if prev_url %}<a href={{prev_url}}>Previous</a>{%endif%}
-    {%if next_url %}<a href={{next_url}}>Next</a>{%endif%}
+    {%if prev_url %}<a href="{{prev_url}}">Previous</a>{%endif%}
+    {%if next_url %}<a href="{{next_url}}">Next</a>{%endif%}
   </div>
 
       <div class="well well-sm" id="conversation_model" hidden>
@@ -91,6 +97,7 @@
 
   let about_me = document.querySelector('#about_me')
   about_me.setAttribute("title","You can change your status here!")
+  about_me.setAttribute("placeholder", "{{current_user.about_me }}")
 
   let current_status = document.querySelector('#current_status')
   let status_form = document.querySelector('#profile_form')

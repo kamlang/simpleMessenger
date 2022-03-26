@@ -46,15 +46,24 @@ give the possibility to leave a group. done
 ask confirmation before deleting a conversation done
 also change cursor on the delete button done
 refactor app models done
+Choose where to perform security checks, main view or models, I think it's better in models done
 
 #### 
 
+handle error api return json not html
+create a bp for stream and xhr ?
+it juse have to be consistent
 doc API
 fix API message push to redis; move stream func to another bp
+
+also allow user to get an api_key
+api get conversation return participant
 implement custom exception
 refactor js
 give the ability to remove a message and a user
+
 validating password with regex.
+
 build api to get message, and send message
 prevent bruteforce attack
 secure file upload checking mime type ?

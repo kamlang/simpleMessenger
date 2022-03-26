@@ -47,6 +47,13 @@ td, th
 {
   max-height:600px;
   overflow:auto;
+  background-color:var(--bg-conversation);
+  border-radius: 10px;
+}
+
+#conversation-container > a
+{
+  color:white;
 }
 
 .message_container
@@ -94,49 +101,16 @@ div[id*="conversation_"]>a
   margin-top:2px;
 }
 
-
 .popover-content,.popover-title
 {
   color:var(--fg-black);
 }
 
-#current_status
-{
-  position:relative;
-  color:var(--fg-black);
-  margin-left:20px;
-  z-index: 1;
-}
 
 .current_avatar
 {
-  float:left;
-  margin-top:-5px;
-  width:28px;
-  height:28px;
-}
-
-#profile_form
-{
-  position:absolute;
-  float:left;
-  margin-top:-5px;
-  margin-left:40px;
-  margin-bottom:5px;
-}
-
-#profile_form #about_me
-{
-  resize: none;
-  float:left;
-  opacity:0.5;
-  z-index: 2;
-  height:30px;
-}
-
-#profile_form #avatar,#profile_form #submit
-{
-  display:none;
+  width:42px;
+  height:42px;
 }
 
 .add_user_form
@@ -144,6 +118,16 @@ div[id*="conversation_"]>a
   color:var(--fg-black);
 }
 
+#avatar,#profile_form > #submit
+{
+  display:none;
+  position:fixed;
+}
+
+#profile_form
+{
+  display:inline;
+}
 
 #reply_container, #messages
 {
