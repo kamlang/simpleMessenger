@@ -10,7 +10,6 @@ from flask import (
     jsonify,
     abort,
     Response,
-    stream_with_context,
 )
 from flask_login import login_user, current_user, logout_user, login_required
 from html import escape
@@ -25,9 +24,9 @@ from app.models import User, Role, Message, Conversation
 from app.main.forms import editUser, sendReply, createConversation, addUserConversation
 from app.auth import auth
 from app.main import main
+from app.sse.views import push_message_to_redis
 from app import db
 from app.email import send_email
-from app import red
 
 
 def with_csrf_validation(view_func):
@@ -46,48 +45,7 @@ def with_csrf_validation(view_func):
 ### Event Stream TODO:Move to a different bp.
 
 
-@stream_with_context
-def event_stream(username):
-    pubsub = red.pubsub()
-    pubsub.subscribe(username)
-    for message in pubsub.listen():
-        if message["type"] == "message":
-            yield "retry:15000\ndata: %s\n\n" % message["data"].decode("utf-8")
 
-
-def push_message(conversation, content):
-    """Each time a user post a message in a conversation it's also pushed to the redis chanel
-    of each participants."""
-    users = conversation.users.all()
-    for user in users:
-        participants = " ".join(
-            ["Me" if user == user_ else user_.username for user_ in users]
-        )
-        redis_message = {
-            "event": "new_message",
-            "from": current_user.username,
-            "avatar_name": current_user.avatar,
-            "conversation_uuid": conversation.conversation_uuid,
-            "content": content,
-            "participants": participants,
-            "unread_messages": user.get_number_of_unread_messages(conversation),
-        }
-        try:
-            red.publish(user.username, str(redis_message))
-        except:
-            raise Exception("Pushing message to redis failed.")
-
-
-@main.route("/stream/<username>")
-@login_required
-def stream(username):
-    if current_user.username == username:
-        response = Response(event_stream(username), mimetype="text/event-stream")
-        # Add custom headers to fix event stream timeout with nginx
-        response.headers["X-Accel-Buffering"] = "no"
-        response.headers["Connection"] = "keep-alive"
-        return response
-    abort(403)
 
 
 ### Defining view functions
@@ -211,7 +169,7 @@ def conversation(conversation_uuid):
         content = form_send.content.data
         message = Message(sender=current_user, content=content)
         conversation.add_message(message)
-        push_message(conversation, content)
+        push_message_to_redis(conversation, content)
         #    return Response(status=204)
         return redirect(
             url_for("main.conversation", conversation_uuid=conversation_uuid)

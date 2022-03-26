@@ -23,7 +23,7 @@
         {%else%}
          <div class="well well-sm has-new-message" id="conversation_{{conversation.conversation_uuid}}">
         {%endif%} 
-      <span class="participants">Participants: 
+        <span class="participants"><span class="glyphicon glyphicon-user"></span>
         {%for user in conversation.users %}
           {%if current_user.username != user.username%}
           <span class="participant">{{user.username}}</span>
@@ -81,11 +81,11 @@
         </div>
       </a>
       </div>
-      <span hidden>Your api key: {{current_user.api_key}} </span>
+      <span hidden>Your API key: {{current_user.api_key}} </span>
 
   <script>
 
-  var event_stream_url = "{{url_for('main.stream',username = current_user.username)}}"
+  var event_stream_url = "{{url_for('sse.stream',username = current_user.username)}}"
   var csrf_token = "{{ csrf_token() }}";
   var all_participant_elements  =  document.querySelectorAll('.participant');
   document.addEventListener('DOMContentLoaded', sse_conversations(event_stream_url));

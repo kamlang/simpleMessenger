@@ -104,7 +104,15 @@ class UserApiMixin():
         except Exception as e:
             UserApiMixin.data["message"] = "An error happened: " + e.args[0]
             return UserApiMixin.data
-
+    def api_leave_conversation(self,conversation_uuid):
+        conversation = Conversation.get_conversation_by_uuid(conversation_uuid)
+        try:
+            conversation.remove_user()
+            UserApiMixin.data["message"] = "You have successfully left the conversation"
+            return UserApiMixin.data
+        except Exception as e:
+            UserApiMixin.data["message"] = "An error happened: " + e.args[0]
+            return UserApiMixin.data
 
 class Role(db.Model):
     __tablename__ = "roles"
@@ -178,7 +186,7 @@ class Conversation(db.Model):
         """ When a user choose to leave a conversation it has to be removed from it.
         if admin left it is replaced with the user which belong to the group for the longest time."""
         if current_user in self.users:
-            self.users.remove(user)
+            self.users.remove(current_user)
             if self.admin == current_user:
                 self.admin = self.users[0]
             db.session.commit()

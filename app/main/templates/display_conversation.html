@@ -9,7 +9,7 @@
     </div>
   {% endif %}
   <div class="well well-sm" id="messages">
-    <span id='participants'>Participant:
+    <span id='participants'><span class="glyphicon glyphicon-user"></span>
       {%for user in users %}
         {%if current_user.username != user.username%}
           <span class="participant">{{user.username}}</span>
@@ -46,7 +46,7 @@
 <script>
   let csrf_token = "{{csrf_token()}}"
   let conversation_uuid = "{{ conversation.conversation_uuid }}"
-  let event_stream_url = "{{url_for('main.stream',username = current_user.username)}}"
+  let event_stream_url = "{{url_for('sse.stream',username = current_user.username)}}"
   document.addEventListener('DOMContentLoaded', sse_conversation(conversation_uuid,event_stream_url));
   let all_participant_elements  =  document.querySelectorAll('.participant');
   document.addEventListener('DOMContentLoaded', set_participant_popover_events(all_participant_elements));

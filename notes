@@ -47,16 +47,16 @@ ask confirmation before deleting a conversation done
 also change cursor on the delete button done
 refactor app models done
 Choose where to perform security checks, main view or models, I think it's better in models done
+handle error api return json not html done
 
 #### 
 
-handle error api return json not html
-create a bp for stream and xhr ?
-it juse have to be consistent
-doc API
+create a bp for stream and xhr it juse have to be consistent
 fix API message push to redis; move stream func to another bp
-
+doc API
 also allow user to get an api_key
+create an API page to document API
+
 api get conversation return participant
 implement custom exception
 refactor js
