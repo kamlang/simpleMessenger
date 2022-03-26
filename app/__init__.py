@@ -41,6 +41,7 @@ def create_app(config_name):
     from app.auth import auth as auth_blueprint
     from app.api import api as api_blueprint
     from app.sse import sse as sse_blueprint
+    from app.xhr import xhr as xhr_blueprint
     from app.restricted import restricted as restricted_blueprint
     from app import login
     app.register_blueprint(main_blueprint)
@@ -48,6 +49,7 @@ def create_app(config_name):
     app.register_blueprint(auth_blueprint, url_prefix="/auth")
     app.register_blueprint(restricted_blueprint, url_prefix="/admin")
     app.register_blueprint(sse_blueprint, url_prefix="/stream")
+    app.register_blueprint(xhr_blueprint, url_prefix="/xhr")
     csrf.exempt(api_blueprint)
     if app.config["MAIL_SERVER"]:
         auth = None
