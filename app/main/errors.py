@@ -5,7 +5,8 @@ from werkzeug.exceptions import HTTPException
 
 @main.app_errorhandler(HTTPException)
 def handle_exception(e):
-    if "api" in request.blueprints:
+    # If user is trying to access an api endpoint return json
+    if "/api/" in request.path[:5]:
         error_message = {
         "code": e.code,
         "name": e.name,

@@ -48,14 +48,20 @@ also change cursor on the delete button done
 refactor app models done
 Choose where to perform security checks, main view or models, I think it's better in models done
 handle error api return json not html done
+create a bp for stream and xhr it juse have to be consistent done
+fix API message push to redis; move stream func to another bp done
+add icon when conversation is update via redis done
+also allow user to get an api_key
 
 #### 
 
-create a bp for stream and xhr it juse have to be consistent
-fix API message push to redis; move stream func to another bp
 doc API
-also allow user to get an api_key
-create an API page to document API
+ /help endpoint create an API page to document API
+/api/help when error
+provide a dictonarry with something like endpoint: help:
+when api request is not well formated an APIusage error can be raised
+
+store api key as a hash treat it as password
 
 api get conversation return participant
 implement custom exception

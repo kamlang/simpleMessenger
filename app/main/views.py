@@ -32,6 +32,10 @@ def home():
         return redirect(url_for("main.conversations"))
     return redirect(url_for("auth.login"))
 
+@main.route("/help_api")
+def help_api():
+    return render_template("help_api.html",url_root = request.url_root)
+
 
 @main.route("/create_conversation")
 @login_required

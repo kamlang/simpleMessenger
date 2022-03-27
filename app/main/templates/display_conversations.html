@@ -8,7 +8,7 @@
     <img title="Click to change your avatar!" class="current_avatar"
     src="/static/avatars/{{current_user.avatar}}" onerror="this.src='/static/avatars/default.png'">
     <a href="{{url_for('main.new_conversation')}}" style="float:right;">
-      <span class="glyphicon glyphicon-plus" title="Create a new conversation"></span>
+      <span class="glyphicon glyphicon-plus" title="Create a new conversation!"></span>
     </a>
     {{ wtf.quick_form(form,form_type="inline",id="profile_form") }}
 
@@ -42,7 +42,9 @@
         <span class="glyphicon glyphicon-minus"></span>
       </a>
           {%if unread_messages_count != 0 %}
-            <span class="unread_messages_count" style="float:right;">({{unread_messages_count}})</span>
+          <span class="unread_messages_count" style="float:right;">
+            <span class="glyphicon glyphicon-envelope"> </span>
+          </span>
             {%else%}
             <span class="unread_messages_count" style="float:right;"> </span>
             {%endif%}
@@ -67,7 +69,7 @@
   </div>
 
       <div class="well well-sm" id="conversation_model" hidden>
-      <span class="participants">Participants: 
+      <span class="participants"><span class="glyphicon glyphicon-user"></span>
               <span class="participant"></span>
       </span>
       <a class="link_to_conversation" href ="">

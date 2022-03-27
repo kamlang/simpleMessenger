@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
+from flask_httpauth import HTTPBasicAuth
 from flask_moment import Moment
 from flask_uuid import FlaskUUID
 from config import config
@@ -15,8 +16,6 @@ import os
 
 db = SQLAlchemy()
 login_manager = LoginManager()
-login_manager.session_protection = "strong"
-login_manager.login_view = "auth.login"
 migrate = Migrate()
 mail = Mail()
 moment = Moment()
@@ -24,6 +23,7 @@ bootstrap = Bootstrap()
 red = redis.StrictRedis()
 csrf = CSRFProtect()
 flask_uuid = FlaskUUID()
+basic_auth =  HTTPBasicAuth()
 
 def create_app(config_name):
     app = Flask(__name__)
@@ -37,13 +37,13 @@ def create_app(config_name):
     csrf.init_app(app)
     bootstrap.init_app(app)
     flask_uuid.init_app(app)
+    from app import login
     from app.main import main as main_blueprint
     from app.auth import auth as auth_blueprint
     from app.api import api as api_blueprint
     from app.sse import sse as sse_blueprint
     from app.xhr import xhr as xhr_blueprint
     from app.restricted import restricted as restricted_blueprint
-    from app import login
     app.register_blueprint(main_blueprint)
     app.register_blueprint(api_blueprint, url_prefix="/api")
     app.register_blueprint(auth_blueprint, url_prefix="/auth")
@@ -51,6 +51,7 @@ def create_app(config_name):
     app.register_blueprint(sse_blueprint, url_prefix="/stream")
     app.register_blueprint(xhr_blueprint, url_prefix="/xhr")
     csrf.exempt(api_blueprint)
+
     if app.config["MAIL_SERVER"]:
         auth = None
         if app.config["MAIL_USERNAME"] or app.config["MAIL_PASSWORD"]:

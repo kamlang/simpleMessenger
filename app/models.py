@@ -7,8 +7,10 @@ import os
 import uuid
 from datetime import datetime
 from app import db, login_manager
+from app.sse.views import push_message_to_redis
 
 class UserApiMixin():
+    # Extends User class so it can handle some api functionality
     data = {}
     data["items"] = [] 
     data["links"] = [
@@ -22,40 +24,62 @@ class UserApiMixin():
         "/api/conversation/<conversation_uuid>/leave",
         "/api/user/getAllConversation"]
 
+    def get_api_key(self):
+        self.api_key = str(uuid.uuid4())
+        db.session.commit()
+        return self.api_key
+
+    def api_get_conversations(self,message_number):
+        """ Return a list of all conversations, including participants and the most recent messages
+        . The number of message returned if defined by message_number argument. """
+        conversations = (
+            Conversation.query.filter(Conversation.users.contains(self))
+            .order_by(Conversation.timestamp.desc())
+        )
+        for conversation in conversations:
+            conversation_data = {}
+            conversation_data["conversation_uuid"] = conversation.conversation_uuid
+            print(conversation.conversation_uuid)
+            conversation_data["participants"] = \
+                [user.username for user in conversation.users.all()]
+            conversation_data["recent_messages"] = \
+                [UserApiMixin._message_to_dict(message) for message in conversation.messages.all( )[:message_number]]
+            UserApiMixin.data["items"].append(conversation_data)
+        return UserApiMixin.data
+
+
     def api_get_unread_messages(self):
         """ Return a list containing all the unread messages of a user. Each message is
         represented as a dictionary. Not really satisfied with that. """
-        if isinstance(self,User):
-            conversation_users = ConversationUsers.query.join(
-                Conversation, Conversation.id == ConversationUsers.conversation_id
-                ).filter(ConversationUsers.user_id == self.id,
-                ConversationUsers.unread_messages > 0).all()
-            if not conversation_users:
-                UserApiMixin.data["message"] =  "You don'have unread messages"
-                return UserApiMixin.data
-
-            for item in conversation_users:
-                conversation = Conversation.query.get(item.conversation_id)
-                # only get the the last nth unread messages
-                unread_messages = conversation.messages.all()[:item.unread_messages]
-                for unread_message in unread_messages:
-                    message = UserApiMixin._message_to_dict(unread_message)
-                    UserApiMixin.data["items"].append(message)
+        conversation_users = ConversationUsers.query.join(
+            Conversation, Conversation.id == ConversationUsers.conversation_id
+            ).filter(ConversationUsers.user_id == self.id,
+            ConversationUsers.unread_messages > 0).all()
+        if not conversation_users:
+            UserApiMixin.data["message"] =  "You don'have unread messages"
             return UserApiMixin.data
+
+        for item in conversation_users:
+            conversation = Conversation.query.get(item.conversation_id)
+            # only get the the last nth unread messages
+            unread_messages = conversation.messages.all()[:item.unread_messages]
+            for unread_message in unread_messages:
+                message = UserApiMixin._message_to_dict(unread_message)
+                UserApiMixin.data["items"].append(message)
+        return UserApiMixin.data
     
     def _message_to_dict(message):
         message_dict = {}
-        message_dict["From"] = message.sender.username
-        message_dict["Content"] = message.content
+        message_dict["From"] = message.sender.username if message.sender else "None"
+        message_dict["Message"] = message.content
         message_dict["Time"] = message.timestamp
         return message_dict
     
     def api_set_about_me(self,content):
-        if isinstance(self,User):
-            self.about_me = content
-            db.session.commit() 
-            UserApiMixin.data["message"] =  "Status has been successfully updated"
-            return UserApiMixin.data
+        self.about_me = content
+        db.session.commit() 
+        UserApiMixin.data["message"] =  "Status has been successfully updated"
+        return UserApiMixin.data
 
     def api_add_message_to_conversation(self,conversation_uuid,message_content):
         conversation = Conversation.get_conversation_by_uuid(conversation_uuid)
@@ -65,6 +89,7 @@ class UserApiMixin():
         except Exception as e: # TODO: This need to be changed to handle custom exception
             UserApiMixin.data["message"] = "An error happened: " + e.args[0]
             return UserApiMixin.data
+        push_message_to_redis(conversation,message_content)
         UserApiMixin.data["message"] = "Message has been successfully added to the conversation"
         return UserApiMixin.data
 
@@ -277,7 +302,8 @@ class User(db.Model, UserMixin, UserApiMixin):
             .paginate(page, current_app.config["POSTS_PER_PAGE"], False)
         )
         return conversations
-
+    
+    
     @property
     def password(self):
         raise AttributeError("Password is not a readable attribute")
