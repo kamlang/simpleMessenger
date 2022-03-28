@@ -63,7 +63,7 @@ def create_app(config_name):
             mailhost=(app.config["MAIL_SERVER"], app.config["MAIL_PORT"]),
             fromaddr="no-reply@" + app.config["MAIL_SERVER"],
             toaddrs=app.config["ADMINS"],
-            subject="Microblog Failure",
+            subject="simpleMessagener Failure",
             credentials=auth,
             secure=secure,
         )
@@ -73,7 +73,7 @@ def create_app(config_name):
         if not os.path.exists("logs"):
             os.mkdir("logs")
         file_handler = RotatingFileHandler(
-            "logs/microblog.log", maxBytes=10240, backupCount=10
+            "logs/simple_messenger.log", maxBytes=10240, backupCount=10
         )
         file_handler.setFormatter(
             logging.Formatter(

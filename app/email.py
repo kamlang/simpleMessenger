@@ -1,4 +1,4 @@
-from . import mail
+from app import mail
 from threading import Thread
 from flask import current_app, render_template, flash
 from flask_mail import Message
@@ -14,7 +14,7 @@ def send_email(to, subject, template, **kwargs):
     msg = Message(
         app.config["MAIL_SUBJECT_PREFIX"] + subject,
         recipients=[to],
-        sender=app.config["USER_EMAIL_SENDER_EMAIL"],
+        sender=app.config["ADMINS"],
     )
     msg.body = render_template(template + ".txt", **kwargs)
     #    msg.html = render_template(template + '.html', **kwargs)
