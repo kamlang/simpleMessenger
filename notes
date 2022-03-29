@@ -52,18 +52,19 @@ create a bp for stream and xhr it juse have to be consistent done
 fix API message push to redis; move stream func to another bp done
 add icon when conversation is update via redis done
 also allow user to get an api_key
+api get conversation return participant
 
 #### 
 
 doc API
+
  /help endpoint create an API page to document API
 /api/help when error
 provide a dictonarry with something like endpoint: help:
-when api request is not well formated an APIusage error can be raised
 
+when api request is not well formated an APIusage error can be raised
 store api key as a hash treat it as password
 
-api get conversation return participant
 implement custom exception
 refactor js
 give the ability to remove a message and a user

@@ -22,13 +22,14 @@
         <a href={{url_for('main.conversations' )}} class="nav-link">My conversations
           <span class="new-message-count has-new-message"></span></a>
       </li>
-           {%else%}
+      {%else%}
       <li class="nav-item">
-      <a href="{{url_for('auth.register')}}" class="nav-link">Register</a>
+        <a href="{{url_for('auth.login')}}" class="nav-link"><span class="glyphicon glyphicon-log-in"></span></a>
       </li>
       <li class="nav-item">
-        <a href="{{url_for('auth.login')}}" class="nav-link"><span class="glyphicon glyphicon-log-in"></span>/a>
+        <a href="{{url_for('auth.register')}}" class="nav-link">Register</a>
       </li>
+
       {%endif%}
       {% if current_user.is_role(role_name='Admin') %}
       <li class="nav-item">

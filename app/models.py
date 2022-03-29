@@ -1,32 +1,62 @@
 from flask_login import UserMixin, AnonymousUserMixin, current_user
-from flask import url_for
+from flask import url_for,abort
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import event
-from flask import current_app
+from flask import current_app, url_for
 import os
 import uuid
 from datetime import datetime
 from app import db, login_manager
 from app.sse.views import push_message_to_redis
+from werkzeug.exceptions import HTTPException
 
-class UserApiMixin():
-    # Extends User class so it can handle some api functionality
-    data = {}
-    data["items"] = [] 
-    data["links"] = [
-        "/api/user/getUnreadMessages",
+class UnauthorizedOperation(HTTPException):
+    code = 403
+
+class ApiDict(dict):
+    #Defining a custom dict with some method to convert some objects to dictionnary.
+    def __init__(self):
+        self["items"] = []
+        self["message"] = ""
+        self["routes"] = [
+        url_for("api.get_unread_messages")
+        "/api/user/getUnreadMessages", # Replace with url_for
         "/api/user/setStatus",
         "/api/user/setAvatar",
+        "/api/user/getConversations",
         "/api/conversation/<conversation_uuid>/addMessage",
-        "/api/conversation/<conversation_uuid>/getMessages",
+        "/api/conversation/<conversation_uuid>/getConversation",
         "/api/conversation/<conversation_uuid>/delete",
         "/api/conversation/<conversation_uuid>/addUsers",
         "/api/conversation/<conversation_uuid>/leave",
         "/api/user/getAllConversation"]
 
+    def message_to_dict(self,message):
+        message_dict = {}
+        message_dict["from"] = message.sender.username if message.sender else "None"
+        message_dict["message"] = message.content
+        message_dict["time"] = message.timestamp
+        return message_dict
+
+    def conversation_to_dict(self,conversation,message_number):
+        conversation_dict = {}
+        conversation_dict["conversation_uuid"] = conversation.conversation_uuid
+        conversation_dict["participants"] = \
+                [user.username for user in conversation.users.all()]
+        conversation_dict["messages"] = \
+                [self.message_to_dict(message) for message in conversation.messages.all( )[:message_number]]
+        return conversation_dict
+
+
+class UserApiMixin():
+    # Extends User class so it can handle some api functionality
+    # Exceptions are handled by the app error_handler
+    
     def get_api_key(self):
         self.api_key = str(uuid.uuid4())
         db.session.commit()
+        api_data = ApiDict()
+        api.data["items"].append({"API key":self.api_key})
         return self.api_key
 
     def api_get_conversations(self,message_number):
@@ -36,16 +66,10 @@ class UserApiMixin():
             Conversation.query.filter(Conversation.users.contains(self))
             .order_by(Conversation.timestamp.desc())
         )
+        api_data = ApiDict()
         for conversation in conversations:
-            conversation_data = {}
-            conversation_data["conversation_uuid"] = conversation.conversation_uuid
-            print(conversation.conversation_uuid)
-            conversation_data["participants"] = \
-                [user.username for user in conversation.users.all()]
-            conversation_data["recent_messages"] = \
-                [UserApiMixin._message_to_dict(message) for message in conversation.messages.all( )[:message_number]]
-            UserApiMixin.data["items"].append(conversation_data)
-        return UserApiMixin.data
+            api_data["items"].append(api_data.conversation_to_dict(conversation,message_number))
+        return api_data
 
 
     def api_get_unread_messages(self):
@@ -55,89 +79,60 @@ class UserApiMixin():
             Conversation, Conversation.id == ConversationUsers.conversation_id
             ).filter(ConversationUsers.user_id == self.id,
             ConversationUsers.unread_messages > 0).all()
+        api_data = ApiDict()
         if not conversation_users:
-            UserApiMixin.data["message"] =  "You don'have unread messages"
-            return UserApiMixin.data
+            api_data["message"] =  "You don'have any unread messages."
+            return api_data
 
         for item in conversation_users:
             conversation = Conversation.query.get(item.conversation_id)
             # only get the the last nth unread messages
-            unread_messages = conversation.messages.all()[:item.unread_messages]
-            for unread_message in unread_messages:
-                message = UserApiMixin._message_to_dict(unread_message)
-                UserApiMixin.data["items"].append(message)
-        return UserApiMixin.data
+            api_data["items"].append(api_data.conversation_to_dict(conversation,item.unread_messages))
+        return api_data
     
-    def _message_to_dict(message):
-        message_dict = {}
-        message_dict["From"] = message.sender.username if message.sender else "None"
-        message_dict["Message"] = message.content
-        message_dict["Time"] = message.timestamp
-        return message_dict
+    def api_get_conversation(self,conversation_uuid,message_number):
+        conversation = Conversation.get_conversation_by_uuid(conversation_uuid) 
+        api_data = ApiDict()
+        api_data["items"].append(api_data.conversation_to_dict(conversation,message_number))
+        return api_data
+
     
     def api_set_about_me(self,content):
         self.about_me = content
         db.session.commit() 
-        UserApiMixin.data["message"] =  "Status has been successfully updated"
-        return UserApiMixin.data
+        api_data = ApiDict()
+        api_data["message"] =  "Status has been successfully updated"
+        return api_data
 
     def api_add_message_to_conversation(self,conversation_uuid,message_content):
         conversation = Conversation.get_conversation_by_uuid(conversation_uuid)
         message = Message(content=message_content,sender_id=self.id)
-        try:
-            conversation.add_message(message)
-        except Exception as e: # TODO: This need to be changed to handle custom exception
-            UserApiMixin.data["message"] = "An error happened: " + e.args[0]
-            return UserApiMixin.data
+        conversation.add_message(message)
         push_message_to_redis(conversation,message_content)
-        UserApiMixin.data["message"] = "Message has been successfully added to the conversation"
-        return UserApiMixin.data
+        api_data = ApiDict()
+        api_data["message"] = "Message has been successfully added to the conversation"
+        return api_data
 
-    def api_get_messages(self,conversation_uuid,page):
+    def api_delete_conversation(self,conversation_uuid):
         conversation = Conversation.get_conversation_by_uuid(conversation_uuid)
-        messages = conversation.messages.paginate(
-        page,15, False)
-        for message in messages.items:
-            message = UserApiMixin._message_to_dict(message)
-            UserApiMixin.data["items"].append(message)
-            UserApiMixin.data["next"] =  (url_for(
-            "api.get_messages",
-            conversation_uuid=conversation_uuid,
-            page=messages.next_num,
-            )
-            if messages.has_next
-            else None
-            )
-        return UserApiMixin.data
-    
-    def api_delete_message(self,conversation_uuid):
-        conversation = Conversation.get_conversation_by_uuid(conversation_uuid)
-        try:
-            conversation.delete()
-            UserApiMixin.data["message"] = "Conversation has been successfully deleted."
-            return UserApiMixin.data
-        except Exception as e :
-            UserApiMixin.data["message"] = "An error happened: " + e.args[0]
-            return UserApiMixin.data
+        conversation.delete()
+        api_data = ApiDict()
+        api_data["message"] = "Conversation has been successfully deleted."
+        return api_data
 
     def api_add_users(self,conversation_uuid,username_list):
         conversation = Conversation.get_conversation_by_uuid(conversation_uuid)
-        try: 
-            conversation.add_users(username_list)
-            UserApiMixin.data["message"] = "All users have been added to the conversation."
-            return UserApiMixin.data
-        except Exception as e:
-            UserApiMixin.data["message"] = "An error happened: " + e.args[0]
-            return UserApiMixin.data
+        conversation.add_users(username_list)
+        api_data = ApiDict()
+        api_data["message"] = "All users have been added to the conversation."
+        return api_data
+
     def api_leave_conversation(self,conversation_uuid):
         conversation = Conversation.get_conversation_by_uuid(conversation_uuid)
-        try:
-            conversation.remove_user()
-            UserApiMixin.data["message"] = "You have successfully left the conversation"
-            return UserApiMixin.data
-        except Exception as e:
-            UserApiMixin.data["message"] = "An error happened: " + e.args[0]
-            return UserApiMixin.data
+        conversation.remove_user()
+        api_data = ApiDict()
+        api_data["message"] = "You have successfully left the conversation"
+        return api_data
 
 class Role(db.Model):
     __tablename__ = "roles"
@@ -199,13 +194,16 @@ class Conversation(db.Model):
             db.session.delete(self)
             db.session.commit()
         else:
-            raise Exception("Only the admin of a conversation can delete it")
+            raise UnauthorizedOperation("Only the admin of a conversation can delete it.")
 
     @classmethod
     def get_conversation_by_uuid(cls, conversation_uuid):
-        return cls.query.filter_by(
+        conversation = cls.query.filter_by(
             conversation_uuid=str(conversation_uuid)
         ).first_or_404()
+        if current_user in conversation.users:
+            return conversation
+        raise UnauthorizedOperation("Only participants which belongs to a conversation can access it.")
 
     def remove_user(self):
         """ When a user choose to leave a conversation it has to be removed from it.
@@ -216,7 +214,7 @@ class Conversation(db.Model):
                 self.admin = self.users[0]
             db.session.commit()
         else:
-            raise Exception("Only a user which belongs to this conversation can be removed")
+            raise UnauthorizedOperation("Only a user which already belongs to a conversation can be removed.") 
 
 
 
@@ -227,10 +225,10 @@ class Conversation(db.Model):
                 if user:
                     self.users.append(user)
                 else:
-                    raise Exception ("User "+ user + " does not exist.")
+                    raise UnauthorizedOpersation("User "+ user + " does not exist.")
             db.session.commit()
         else:
-            raise Exception("Only admin of a conversation can add users.")
+            raise UnauthorizedOperation("Only admin of a conversation can add users.")
 
     def _increment_unread_messages(self, user_list):
         for user in user_list:
@@ -254,7 +252,7 @@ class Conversation(db.Model):
             self._increment_unread_messages(self.users)
             db.session.commit()
         else:
-            raise Exception(
+            raise UnauthorizedOperation(
                 "Only users which are participants of a conversation can add message."
             )
 
@@ -324,7 +322,7 @@ class User(db.Model, UserMixin, UserApiMixin):
         try:
             self.roles.append(Role.query.filter_by(name=role).first())
         except:
-            raise AttributeError("The role specified do not exists")
+            raise Exception("The role specified does not exist.")
 
     def is_role(self, role_name):
         for role in self.roles:

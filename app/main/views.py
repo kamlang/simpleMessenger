@@ -90,8 +90,6 @@ def conversation(conversation_uuid):
     page = request.args.get("page", 1, type=int)
 
     conversation = Conversation.get_conversation_by_uuid(conversation_uuid)
-    if not current_user in conversation.users:
-        abort(403)
 
     if form_add.validate_on_submit():
         # Add a list of user to a conversation. Only admin of a conversation can add a user.
