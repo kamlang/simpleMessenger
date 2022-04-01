@@ -1,5 +1,5 @@
 from flask_login import UserMixin, AnonymousUserMixin, current_user
-from flask import url_for,abort
+from flask import url_for
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import event
 from flask import current_app, url_for
@@ -14,22 +14,11 @@ class UnauthorizedOperation(HTTPException):
     code = 403
 
 class ApiDict(dict):
-    #Defining a custom dict with some method to convert some objects to dictionnary.
+    # Defining a custom dict with some methods to convert some objects to dictionnary.
     def __init__(self):
         self["items"] = []
         self["message"] = ""
-        self["routes"] = [
-        url_for("api.get_unread_messages")
-        "/api/user/getUnreadMessages", # Replace with url_for
-        "/api/user/setStatus",
-        "/api/user/setAvatar",
-        "/api/user/getConversations",
-        "/api/conversation/<conversation_uuid>/addMessage",
-        "/api/conversation/<conversation_uuid>/getConversation",
-        "/api/conversation/<conversation_uuid>/delete",
-        "/api/conversation/<conversation_uuid>/addUsers",
-        "/api/conversation/<conversation_uuid>/leave",
-        "/api/user/getAllConversation"]
+        self["help"] = url_for("api.get_help")
 
     def message_to_dict(self,message):
         message_dict = {}
@@ -51,13 +40,14 @@ class ApiDict(dict):
 class UserApiMixin():
     # Extends User class so it can handle some api functionality
     # Exceptions are handled by the app error_handler
-    
+
     def get_api_key(self):
         self.api_key = str(uuid.uuid4())
         db.session.commit()
         api_data = ApiDict()
-        api.data["items"].append({"API key":self.api_key})
-        return self.api_key
+        api_data["items"].append({"API key": self.api_key})
+        api_data["message"] = "You can know use your API key using Autorization header."
+        return api_data
 
     def api_get_conversations(self,message_number):
         """ Return a list of all conversations, including participants and the most recent messages

@@ -5,20 +5,24 @@
           <br>
       <ul>
         <li><p> First you need to get an API key:</p>
-          <code>curl --basic --user username:password {{url_root}}api/getAPIkey</code> </li>
+          <code>curl --basic --user username:password {{url_for("api.get_api_key")}}</code> </li>
           <br>
           <li><p> Then you can access the whole api functionality using basic http auth: </p>
-          <code> curl -H "Authorization: ${api_key}" {{url_root}}api/endPoint</code><br>
+          <code> curl -H "Authorization: ${api_key}" /api/endPoint</code><br>
           <br>
           <p> Feel free to set you're API key as an environment variable i.e</p>
           <code>export api_key = "YOUR API KEY"</code> </li>
           <br>
         </ul>
-      <h2> Endpoint list </h2>
-
-      <ul>
-        <li><p> To complete </p> </li>
-      </ul>
-    </div>
-
+        <hr>
+      <h2> API endpoints: </h2>
+      <br>
+      {% for route in api_doc %}
+        <ul>
+          <li> {{route["path"]}} </li>
+          <li> HTTP request method: {{route["method"]}} </li>
+          <li> {{route["help"]}} </li>
+        </ul>
+        <hr>
+      {% endfor %}
     {% endblock %}

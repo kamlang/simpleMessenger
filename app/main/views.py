@@ -25,6 +25,7 @@ from app.auth import auth
 from app.main import main
 from app.sse.views import push_message_to_redis
 from app import db
+from app.api import api_doc_list
 
 @main.route("/")
 def home():
@@ -34,7 +35,9 @@ def home():
 
 @main.route("/help_api")
 def help_api():
-    return render_template("help_api.html",url_root = request.url_root)
+    return render_template("help_api.html",
+            url_root = request.url_root,
+            api_doc = api_doc_list)
 
 
 @main.route("/create_conversation")

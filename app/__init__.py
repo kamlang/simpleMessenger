@@ -85,5 +85,7 @@ def create_app(config_name):
         app.logger.addHandler(file_handler)
         app.logger.setLevel(logging.DEBUG)
         app.logger.info("simpleMessenger startup")
+       # doc =[ print(str(func[0]) +" DOC:"+ str(getdoc(func[1]))) for func in app.view_functions.items() if "api." in func[0] and not getdoc(func[1]) is None]
+        
 
     return app
