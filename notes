@@ -53,14 +53,12 @@ fix API message push to redis; move stream func to another bp done
 add icon when conversation is update via redis done
 also allow user to get an api_key
 api get conversation return participant
+/help endpoint create an API page to document API
+/api/help when error
+doc API
+provide a dictonarry with something like endpoint: help:
 
 #### 
-
-doc API
-
- /help endpoint create an API page to document API
-/api/help when error
-provide a dictonarry with something like endpoint: help:
 
 when api request is not well formated an APIusage error can be raised
 store api key as a hash treat it as password
