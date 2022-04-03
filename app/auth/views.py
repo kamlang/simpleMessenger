@@ -85,12 +85,17 @@ def register():
         username = request.form["username"]
         password = request.form["password"]
         email = request.form["email"]
-        user = User(username=username, password=password, email=email, role="User")
-        db.session.add(user)
-        db.session.commit()
-        send_email_token("confirmation", username)
-        flash("Please check you emails and click on registration link.")
-        return redirect("/")
+        print(username)
+        try:
+            user = User(username=username, password=password, email=email) 
+            db.session.add(user)
+            db.session.commit()
+            send_email_token("confirmation", username)
+            flash("Please check you emails and click on registration link.")
+            return redirect(url_for("auth.login"))
+        except Exception as e:
+            print(e)
+            return redirect(url_for("auth.register"))
     return render_template("form.html", form=form, form_name="Register")
 
 
@@ -185,4 +190,3 @@ def send_email_token(context, username):
         username=username,
         token=token,
     )
-    flash("Please check your emails and click on the link provided.")

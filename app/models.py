@@ -277,6 +277,12 @@ class User(db.Model, UserMixin, UserApiMixin):
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
     _avatar_hash = db.Column(db.String(32), default="default.png")
 
+    def __init__(self,username,password,email):
+        self.username = username
+        self.password = password
+        self.email = email
+        self.role = "User"
+
     def get_number_of_unread_messages(self, conversation):
         q = ConversationUsers.query.filter_by(
             user_id=self.id, conversation_id=conversation.id

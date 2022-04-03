@@ -11,9 +11,9 @@ class Config:
     REMEMBER_COOKIE_HTTPONLY = True
     UPLOAD_FOLDER = os.path.join(basedir, "app/static/avatars")
     MAIL_SUBJECT_PREFIX = "[simpleMessenger] "
-    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD")
     MAIL_USERNAME = os.environ.get("MAIL_USERNAME")
-    ADMINS = ["glmsh@protonmail.com"]
+    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD")
+    ADMINS = "glmsh@protonmail.com"
     POSTS_PER_PAGE = 7
 
 
@@ -21,7 +21,6 @@ class DevelopmentConfig(Config):
     DEBUG = True
     SECRET_KEY =os.environ.get("SECRET_KEY")
     REDIS_URL =os.environ.get("DEV_REDIS_URL")
-    REDIS_PASSWORD = os.environ.get("REDIS_PASSWORD")
     SSL_KEYFILE = os.path.join(basedir, "./certs/key.pem")
     SSL_CERTFILE = os.path.join(basedir, "./certs/cert.pem")
     USER_EMAIL_SENDER_EMAIL = "Admin"

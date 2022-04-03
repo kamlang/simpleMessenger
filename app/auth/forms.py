@@ -57,12 +57,12 @@ class register_form(FlaskForm):
     confirm = PasswordField("Confirm Password")
     submit = SubmitField("Submit")
     
-    def validate_password(self,password):
+    """def validate_password(self,password):
         password_pattern = re.compile("^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$ %^&*-]).{8,}$")
         if not re.match(password_pattern,password.data):
             raise ValidationError("Please use a stronger password,\
             password must contains at least one uppercase letter,\
-            one number, and one special character. It must be longer than 8 characters")
+            one number, and one special character. It must be longer than 8 characters")"""
 
 
     def validate_username(self, username):
@@ -89,12 +89,12 @@ class password_reset_confirmation(FlaskForm):
     confirm = PasswordField("Confirm Password")
     submit = SubmitField("Submit")
 
-    def validate_password(self,password):
+    """def validate_password(self,password):
         password_pattern = re.compile("^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$ %^&*-]).{8,}$")
         if not re.match(password_pattern,password.data):
             raise ValidationError("Please use a stronger password,\
             password must contains at least one uppercase letter,\
-            one number, and one special character. It must be longer than 8 characters")
+            one number, and one special character. It must be longer than 8 characters")"""
 
 
 

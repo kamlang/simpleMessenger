@@ -11,22 +11,23 @@ def load_user_from_request(request):
     api_key = request.headers.get('Authorization')
     if api_key:
         api_key = api_key.replace('Basic ', '', 1)
-        user = User.query.filter_by(api_key=api_key).first()
-        return user if user else None
+        user = User.query.filter_by(api_key=api_key).first_or_404()
+        return user
 
 @login_manager.user_loader
 def load_user(id):
-    return User.query.get(id)
+    user = User.query.get(id)
+    return user
 
 @login_manager.unauthorized_handler
 def unauthorized():
-    if "/api/" in request.path[:5]:
+    if "/api/" in request.path[:5]: # TODO:change to startswith
         message= { "message":"Please provide a valid API key." }
         return jsonify(message), 403
 
 @basic_auth.verify_password
 def verify_password(username, password):
-    user = User.query.filter_by(username=username).first()
+    user = User.query.filter_by(username=username).first_or_404()
     if user and user.verify_password(password):
         return user
 
