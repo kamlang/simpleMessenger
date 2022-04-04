@@ -65,7 +65,7 @@ def login():  ### Restrict to unauthenticate user
             return redirect(next_page)
         else:
             flash("User does not exist or password is incorrect")
-            return redirect(url_for("main.conversations"))
+            return redirect(url_for("auth.login"))
     return render_template("form.html", form=form, form_name="Login")
 
 

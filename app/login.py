@@ -23,7 +23,9 @@ def load_user(id):
 def unauthorized():
     if "/api/" in request.path[:5]: # TODO:change to startswith
         message= { "message":"Please provide a valid API key." }
-        return jsonify(message), 403
+        return jsonify(message), 404
+    else:
+        abort(404)
 
 @basic_auth.verify_password
 def verify_password(username, password):

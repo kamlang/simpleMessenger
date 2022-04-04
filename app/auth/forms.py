@@ -19,6 +19,7 @@ from wtforms.validators import (
 from flask_wtf.file import FileField, FileRequired, FileAllowed
 from app.models import User
 
+regex_password_pattern = "^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$ %^&*-]).{8,}$"
 
 class login_form(FlaskForm):
     username = StringField(
@@ -32,38 +33,33 @@ class login_form(FlaskForm):
 
 
 class register_form(FlaskForm):
+
     username = StringField(
         "Username",
         validators=[
-            InputRequired(message="This field can not be empty"),
+            InputRequired(message="This field can not be empty."),
             Length(4, 24, message="Username must be at least 4 characters long."),
-            Regexp("^[0-9A-Za-z_]+$", message="Special characters are not allowed."),
+            Regexp("^\w+$", message="Special characters are not allowed."),
         ],
     )
     email = StringField(
         "Email",
         validators=[
-            InputRequired(message="This field can not be empty"),
+            InputRequired(message="This field can not be empty."),
             Email("Please enter a valid email address."),
         ],
     )
     password = PasswordField(
         "Password",
         validators=[
-            InputRequired(message="This field can not be empty"),
-            EqualTo("confirm", message="Passwords must match"),
+            InputRequired(message="This field can not be empty."),
+            EqualTo("confirm", message="Passwords must match."),
+            Regexp(regex_password_pattern, message="Password must be at least 8 characters long\
+                    and contain at least one special character, uppercase and lower case."),
         ],
     )
     confirm = PasswordField("Confirm Password")
     submit = SubmitField("Submit")
-    
-    """def validate_password(self,password):
-        password_pattern = re.compile("^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$ %^&*-]).{8,}$")
-        if not re.match(password_pattern,password.data):
-            raise ValidationError("Please use a stronger password,\
-            password must contains at least one uppercase letter,\
-            one number, and one special character. It must be longer than 8 characters")"""
-
 
     def validate_username(self, username):
         user = User.query.filter_by(username=username.data).first()
@@ -72,36 +68,21 @@ class register_form(FlaskForm):
 
 
 class password_reset_confirmation(FlaskForm):
-    """  username = StringField(
-        "Username",
-        validators=[
-            InputRequired(message="This field can not be empty"),
-            Length(1, 48),
-        ],
-    )"""
+
     password = PasswordField(
         "Password",
         validators=[
-            InputRequired(message="This field can not be empty"),
-            EqualTo("confirm", message="Passwords must match"),
+            InputRequired(message="This field can not be empty."),
+            EqualTo("confirm", message="Passwords must match."),
+            Regexp(regex_password_pattern, message="Password must be at least 8 characters long\
+                    and contain at least one special character, uppercase and lower case."),
         ],
     )
     confirm = PasswordField("Confirm Password")
     submit = SubmitField("Submit")
 
-    """def validate_password(self,password):
-        password_pattern = re.compile("^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$ %^&*-]).{8,}$")
-        if not re.match(password_pattern,password.data):
-            raise ValidationError("Please use a stronger password,\
-            password must contains at least one uppercase letter,\
-            one number, and one special character. It must be longer than 8 characters")"""
 
-
-
-
-class confirm_username(
-    FlaskForm
-):  ##### After forgot password is pressed at login screen, asking for the username
+class confirm_username(FlaskForm):
     username = StringField(
         "Username",
         validators=[
