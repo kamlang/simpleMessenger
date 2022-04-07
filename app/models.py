@@ -14,7 +14,7 @@ class UnauthorizedOperation(HTTPException):
     code = 403
 
 class ApiDict(dict):
-    # Defining a custom dict with some methods to convert some objects to dictionnary.
+    """Defining a custom dict with some methods to convert some objects to dictionnary."""
     def __init__(self):
         self["items"] = []
         self["message"] = ""
@@ -38,8 +38,8 @@ class ApiDict(dict):
 
 
 class UserApiMixin():
-    # Extends User class so it can handle some api functionality
-    # Exceptions are handled by the app error_handler
+    """Extends User class so it can handle some api functionality
+        Exceptions are handled by the app error_handler."""
 
     def get_api_key(self):
         self.api_key = str(uuid.uuid4())
@@ -197,7 +197,7 @@ class Conversation(db.Model):
 
     def remove_user(self):
         """ When a user choose to leave a conversation it has to be removed from it.
-        if admin left it is replaced with the user which belong to the group for the longest time."""
+        if admin left it is replaced with the user which belongs to the conversation for the longest time."""
         if current_user in self.users:
             self.users.remove(current_user)
             if self.admin == current_user:
@@ -205,7 +205,6 @@ class Conversation(db.Model):
             db.session.commit()
         else:
             raise UnauthorizedOperation("Only a user which already belongs to a conversation can be removed.") 
-
 
 
     def add_users(self, username_list):
@@ -349,10 +348,12 @@ class User(db.Model, UserMixin, UserApiMixin):
                 format="png",
             )
         except:
-            flash("Please provide a valid image file")
+            exception = UnauthorizedOperation("Image file is not valid.")
+            exception.code = 400
+            raise exception
 
 
 class AnonymousUser(AnonymousUserMixin):
-    # To avoid error when calling some method as unauthenticated user.
+    # To avoid error when calling some methods as unauthenticated user.
     def is_role(self, role_name):
         return False

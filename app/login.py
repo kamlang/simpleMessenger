@@ -16,16 +16,15 @@ def load_user_from_request(request):
 
 @login_manager.user_loader
 def load_user(id):
-    user = User.query.get(id)
-    return user
+    return User.query.get(id)
 
 @login_manager.unauthorized_handler
 def unauthorized():
-    if "/api/" in request.path[:5]: # TODO:change to startswith
+    if request.path.startswith("/api/")
         message= { "message":"Please provide a valid API key." }
-        return jsonify(message), 404
+        return jsonify(message), 401
     else:
-        abort(404)
+        abort(401)
 
 @basic_auth.verify_password
 def verify_password(username, password):

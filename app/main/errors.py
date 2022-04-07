@@ -10,7 +10,7 @@ def handle_exception(e):
 
     if isinstance(e, HTTPException):
     # If user is trying to access an api endpoint return json
-        if "/api/" in request.path[:5]:
+        if request.path.startswith("/api/"):
             error_message = {
             "code": e.code,
             "name": e.name,
