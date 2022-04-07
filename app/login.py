@@ -20,7 +20,7 @@ def load_user(id):
 
 @login_manager.unauthorized_handler
 def unauthorized():
-    if request.path.startswith("/api/")
+    if request.path.startswith("/api/"):
         message= { "message":"Please provide a valid API key." }
         return jsonify(message), 401
     else:

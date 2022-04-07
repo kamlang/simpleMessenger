@@ -26,8 +26,8 @@ from app.auth.forms import (
 )
 from app.auth import auth
 from app import db
-from app.email import send_email
-
+#from app.email import send_email
+from app.gmail import send_email
 
 ###### Definig some custom decorator
 
@@ -85,7 +85,6 @@ def register():
         username = request.form["username"]
         password = request.form["password"]
         email = request.form["email"]
-        print(username)
         try:
             user = User(username=username, password=password, email=email) 
             db.session.add(user)
