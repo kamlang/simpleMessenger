@@ -17,7 +17,9 @@ SCOPES = ['https://www.googleapis.com/auth/gmail.modify']
 def send_async_email(message):
     try:
         service = get_api_service()
-        service.users().messages().send(userId='me', body=message).execute()
+        send = (service.users().messages().send(userId='me', body=message)
+               .execute())
+        return send
     except HttpError as error:
         print(f'An error occurred: {error}')
         raise Exception("Something when wrong: {error}")
@@ -25,11 +27,11 @@ def send_async_email(message):
 
 def send_email(to,subject,template,**kwargs):
     message = create_email_message('me',to,subject,
-        render_template(template + ".txt", **kwargs))
-    thread = Thread(target=send_async_email, args=(message))
-    thread.start()
-    return thread
-   
+                render_template(template + ".txt", **kwargs))
+    thr = Thread(target=send_async_email, args=(message,))
+    thr.start()
+    return thr
+
 
 def get_api_service():
     """ Returns an Authorized Gmail API service instance."""
@@ -73,6 +75,7 @@ def create_email_message(sender, to, subject, message_text):
 
     app = current_app._get_current_object()
     message = MIMEText(message_text)
+    print(message_text)
     message['to'] = to
     message['from'] = sender
     message['subject'] = app.config["MAIL_SUBJECT_PREFIX"] + subject
