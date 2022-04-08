@@ -14,19 +14,22 @@ from flask import current_app, render_template
 # If modifying these scopes, delete the file token.json.
 SCOPES = ['https://www.googleapis.com/auth/gmail.modify']
 
-def send_email(to,subject,template,**kwargs):
-    service = get_api_service()
+def send_async_email(message):
     try:
-        message = create_email_message('me',to,subject,
-                render_template(template + ".txt", **kwargs))
-        send = (service.users().messages().send(userId='me', body=message)
-               .execute())
-        return send
-
+        service = get_api_service()
+        service.users().messages().send(userId='me', body=message).execute()
     except HttpError as error:
         print(f'An error occurred: {error}')
         raise Exception("Something when wrong: {error}")
 
+
+def send_email(to,subject,template,**kwargs):
+    message = create_email_message('me',to,subject,
+        render_template(template + ".txt", **kwargs))
+    thread = Thread(target=send_async_email, args=(message))
+    thread.start()
+    return thread
+   
 
 def get_api_service():
     """ Returns an Authorized Gmail API service instance."""
@@ -74,4 +77,4 @@ def create_email_message(sender, to, subject, message_text):
     message['from'] = sender
     message['subject'] = app.config["MAIL_SUBJECT_PREFIX"] + subject
     b64_bytes = base64.urlsafe_b64encode(message.as_bytes())
-     return {'raw': b64_bytes.decode()}
+    return {'raw': b64_bytes.decode()}
