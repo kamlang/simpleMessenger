@@ -13,6 +13,9 @@ class Config:
     MAIL_SUBJECT_PREFIX = "[simpleMessenger] "
     ADMINS = ["admin@simpleMessenger.com"]
     POSTS_PER_PAGE = 7
+    @staticmethod
+    def init_app(app):
+        pass
 
 
 class DevelopmentConfig(Config):
@@ -30,9 +33,6 @@ class DevelopmentConfig(Config):
     SQLALCHEMY_DATABASE_URI = os.environ.get(
         "DEV_DATABASE_URL"
     ) or "sqlite:///" + os.path.join(basedir, "users-dev.db")
-    @staticmethod
-    def init_app(app):
-        pass
 
 
 class TestingConfig(Config):
