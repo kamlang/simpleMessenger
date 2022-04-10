@@ -59,9 +59,10 @@ let sse_conversations = (event_stream_url) => {
     updated_conversation.querySelector('.message_content').innerText = obj.content;
     updated_conversation.querySelector('.timestamp').innerText = moment().format('LLL');
     updated_conversation.querySelector('.sender').innerText = "From: " + obj.from;
-    message_icon=document.createElement(span)
-    message_icon.addAttribute('class','glyphicon glyphicon-envelope')
-    updated_conversation.querySelector('.unread_messages_count').append(message_icon)
+    if (!updated_conversation.querySelector('.glyphicon-envelope')) {
+      message_icon=document.createElement('span')
+      message_icon.setAttribute('class','glyphicon glyphicon-envelope') 
+    updated_conversation.querySelector('.unread_messages_count').append(message_icon) }
     updated_conversation.setAttribute('class', 'has-new-message')
     const conversations = document.querySelector('#conversations')
     const last_conversation = conversations.querySelector("[id^='conversation_']")
@@ -70,6 +71,10 @@ let sse_conversations = (event_stream_url) => {
     else {
       conversations.insertBefore(updated_conversation,last_conversation)}
     }
+    source.onerror = (event) =>{
+//      source.close()
+      console.log("error event triggered") }
+//      setTimeout(sse_conversations(event_stream_url),5000)}
   }
 
 let sse_conversation = (conversation_uuid,event_stream_url) => {
@@ -98,6 +103,8 @@ let sse_conversation = (conversation_uuid,event_stream_url) => {
               new_messages_count += 1
         }
     };
+  source.onerror = (event) =>{
+    console.log("error event triggered") }
  }
 
 let trigger_action = (conversation_uuid,action) => {

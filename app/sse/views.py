@@ -31,15 +31,16 @@ def event_stream(username):
     pubsub.subscribe(username)
     for message in pubsub.listen():
         if message["type"] == "message":
-            yield "retry:15000\ndata: %s\n\n" % message["data"].decode("utf-8")
+            yield "retry:5000\ndata: %s\n\n" % message["data"].decode("utf-8")
 
 @sse.route("/<username>")
 @login_required
 def stream(username):
     if current_user.username == username:
-        response = Response(event_stream(username), mimetype="text/event-stream")
+        response = Response(event_stream(username), 
+                content_type="text/event-stream; charset=utf-8")
         # Add custom headers to fix event stream timeout with nginx
-        response.headers["X-Accel-Buffering"] = "no"
-        response.headers["Connection"] = "keep-alive"
+#        response.headers["X-Accel-Buffering"] = "no"
+#        response.headers["Connection"] = "keep-alive"
         return response
     abort(403)
