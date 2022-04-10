@@ -71,9 +71,6 @@ let sse_conversations = (event_stream_url) => {
     else {
       conversations.insertBefore(updated_conversation,last_conversation)}
     }
-    source.onerror = (event) =>{
-      console.log("error event triggered")
-      setTimeout(sse_conversations(event_stream_url),5000)}
   }
 
 let sse_conversation = (conversation_uuid,event_stream_url) => {
@@ -102,8 +99,6 @@ let sse_conversation = (conversation_uuid,event_stream_url) => {
               new_messages_count += 1
         }
     };
-  source.onerror = (event) =>{
-    console.log("error event triggered") }
  }
 
 let trigger_action = (conversation_uuid,action) => {
