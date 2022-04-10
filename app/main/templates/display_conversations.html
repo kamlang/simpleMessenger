@@ -104,11 +104,6 @@
   let current_status = document.querySelector('#current_status')
   let status_form = document.querySelector('#profile_form')
 
-  about_me.addEventListener("focusin", function() { 
-        current_status.style.opacity='0'})
-  about_me.addEventListener("focusout", function() {
-        status_form.reset()
-        current_status.style.opacity='1'})
   about_me.addEventListener("keypress",function(event) {
         if (event.keyCode == 13) {
         document.querySelector('#submit').click()}
