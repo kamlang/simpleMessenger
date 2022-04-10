@@ -72,9 +72,8 @@ let sse_conversations = (event_stream_url) => {
       conversations.insertBefore(updated_conversation,last_conversation)}
     }
     source.onerror = (event) =>{
-//      source.close()
-      console.log("error event triggered") }
-//      setTimeout(sse_conversations(event_stream_url),5000)}
+      console.log("error event triggered")
+      setTimeout(sse_conversations(event_stream_url),5000)}
   }
 
 let sse_conversation = (conversation_uuid,event_stream_url) => {
