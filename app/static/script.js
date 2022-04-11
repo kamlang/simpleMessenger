@@ -36,8 +36,8 @@ async function get_user_info(username) {
 		return json
 }
 
-let sse_conversations = (event_stream_url) => {
-  let source = new EventSource(event_stream_url);
+let sse_conversations = (event_stream_url,delay = 1000) => { //setup sse stream and event handling
+    let source = new EventSource(event_stream_url);
   source.onmessage = (event) => {
 
     const json = event.data.replaceAll("'",'"').trim()
@@ -71,7 +71,11 @@ let sse_conversations = (event_stream_url) => {
     else {
       conversations.insertBefore(updated_conversation,last_conversation)}
     }
+    source.onerror = (event) => {
+      source.close()
+      setTimeout(() => sse_conversations(event_stream_url,delay*2),delay)
   }
+}
 
 let sse_conversation = (conversation_uuid,event_stream_url) => {
     let source = new EventSource(event_stream_url);
@@ -98,7 +102,11 @@ let sse_conversation = (conversation_uuid,event_stream_url) => {
               document.querySelector(".new-message-count").innerText = " (" + Number(new_messages_count + 1) +")"
               new_messages_count += 1
         }
-    };
+    }
+    source.onerror = (event) => {
+      source.close()
+      setTimeout(() => sse_conversations(event_stream_url,delay*2),delay)
+  }
  }
 
 let trigger_action = (conversation_uuid,action) => {
