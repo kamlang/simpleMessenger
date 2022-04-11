@@ -78,7 +78,7 @@ def conversations():
     )
     return render_template(
         "display_conversations.html",
-        conversations=conversations.items,
+        conversations=conversations,
         form=form,
         next_url=next_url,
         prev_url=prev_url,
