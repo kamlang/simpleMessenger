@@ -197,11 +197,15 @@ class Conversation(db.Model):
 
     def remove_user(self):
         """ When a user choose to leave a conversation it has to be removed from it.
-        if admin left it is replaced with the user which belongs to the conversation for the longest time."""
+        if admin left it is replaced with the user which belongs to the conversation for the longest time
+        If not user left, then conversation is deleted."""
         if current_user in self.users:
             self.users.remove(current_user)
             if self.admin == current_user:
-                self.admin = self.users[0]
+                try:
+                    self.admin = self.users[0]
+                except:
+                    db.session.delete(self)
             db.session.commit()
         else:
             raise UnauthorizedOperation("Only a user which already belongs to a conversation can be removed.") 
