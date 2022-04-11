@@ -4,6 +4,7 @@ let set_participant_popover_events = (all_participant_elements) => {
     let timeout = null
     all_participant_elements.forEach((participant_element) => {
       let username = participant_element.innerText.trim()
+      console.log(username)
       if (username && participant_element) {
         participant_element.addEventListener("mouseover", function() {
           timeout = setTimeout(() => {
@@ -30,7 +31,7 @@ let set_participant_popover_events = (all_participant_elements) => {
 }
 
 async function get_user_info(username) {
-  let response = await fetch('xhr/getUserInfo/' + username,
+  let response = await fetch( window.location.origin + '/xhr/getUserInfo/' + username,
 		{ headers:{'X-CSRFToken': csrf_token }})
 		let json = await response.json()
 		return json
