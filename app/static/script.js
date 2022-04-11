@@ -78,7 +78,7 @@ let sse_conversations = (event_stream_url,delay = 1000) => { //setup sse stream 
   }
 }
 
-let sse_conversation = (conversation_uuid,event_stream_url) => {
+let sse_conversation = (conversation_uuid,event_stream_url,delay = 1000) => {
     let source = new EventSource(event_stream_url);
     let new_messages_count = 0
     source.onmessage = (event) => {
@@ -106,7 +106,7 @@ let sse_conversation = (conversation_uuid,event_stream_url) => {
     }
     source.onerror = (event) => {
       source.close()
-      setTimeout(() => sse_conversations(event_stream_url,delay*2),delay)
+      setTimeout(() => sse_conversation(conversation_uuid,event_stream_url,delay*2),delay)
   }
  }
 
