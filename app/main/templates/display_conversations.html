@@ -15,6 +15,11 @@
           </div>
 
   <div class="well well-sm" id="conversations">
+    {%set user_has_any_conversation = (conversations.total != 0)%}
+    {% if not user_has_any_conversation %}
+    p> You don't have any conversation yet you can create one using the 
+      <span class="glyphicon glyphicon-plus"> button above. </p>
+    {%endif%}
     {%for conversation in conversations%}
       {% set unread_messages_count = current_user.get_number_of_unread_messages(conversation)%}
       {% set last_message = conversation.messages.first() %}
