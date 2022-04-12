@@ -1,4 +1,4 @@
-from flask import redirect, jsonify, request, abort, Response
+from flask import redirect, jsonify, request, abort, Response, url_for
 from flask_login import login_required
 from flask_wtf.csrf import validate_csrf
 from functools import wraps
@@ -43,7 +43,6 @@ def delete_conversation(conversation_uuid):
     conversation = Conversation.get_conversation_by_uuid(conversation_uuid)
     try:
         conversation.delete()
-        return redirect(url_for("main.conversations"))
     except:
         abort(403)
 
@@ -56,7 +55,6 @@ def leave_conversation(conversation_uuid):
     conversation = Conversation.get_conversation_by_uuid(conversation_uuid)
     try:
         conversation.remove_user()
-        return redirect(url_for("main.conversations"))
     except:
         abort(403)
 
