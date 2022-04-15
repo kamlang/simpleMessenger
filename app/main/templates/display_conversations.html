@@ -92,7 +92,7 @@
 
   <script>
 
-  var event_stream_url = "{{url_for('sse.stream',username = current_user.username)}}"
+  var event_stream_url = window.location.origin + "{{url_for('sse.stream',username = current_user.username)}}"
   var csrf_token = "{{ csrf_token() }}";
   var all_participant_elements  =  document.querySelectorAll('.participant');
   document.addEventListener('DOMContentLoaded', sse_conversations(event_stream_url));

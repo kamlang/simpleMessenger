@@ -39,6 +39,7 @@ async function get_user_info(username) {
 
 let sse_conversations = (event_stream_url,delay = 1000) => { //setup sse stream and event handling
     let source = new EventSource(event_stream_url);
+    
   source.onmessage = (event) => {
 
     const json = event.data.replaceAll("'",'"').trim()
@@ -76,6 +77,7 @@ let sse_conversations = (event_stream_url,delay = 1000) => { //setup sse stream 
       source.close()
       setTimeout(() => sse_conversations(event_stream_url,delay*2),delay)
   }
+    source.onopen = event => delay = 1000 // reset delay after successfull connection
 }
 
 let sse_conversation = (conversation_uuid,event_stream_url,delay = 1000) => {
@@ -108,6 +110,7 @@ let sse_conversation = (conversation_uuid,event_stream_url,delay = 1000) => {
       source.close()
       setTimeout(() => sse_conversation(conversation_uuid,event_stream_url,delay*2),delay)
   }
+    source.onopen = event => delay = 1000 // reset delay after successfull connection
  }
 
 let trigger_action = (conversation_uuid,action) => {
