@@ -3,7 +3,6 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
-from flask_httpauth import HTTPBasicAuth
 from flask_moment import Moment
 from flask_uuid import FlaskUUID
 from config import config
@@ -23,7 +22,6 @@ bootstrap = Bootstrap()
 red = redis.StrictRedis()
 csrf = CSRFProtect()
 flask_uuid = FlaskUUID()
-basic_auth =  HTTPBasicAuth()
 
 def create_app(config_name):
     app = Flask(__name__)
