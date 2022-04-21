@@ -10,7 +10,6 @@ from authlib.integrations.flask_oauth2 import current_token
 
 
 @api.route("/help")
-@require_oauth('read')
 def help_api():
     return render_template("help_api.html",
             url_root = request.url_root,
