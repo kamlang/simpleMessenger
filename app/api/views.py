@@ -1,13 +1,25 @@
-from flask import jsonify, request, abort
+from flask import jsonify, request, abort,url_for, render_template, redirect, flash
 from flask_login import login_user, current_user, logout_user, login_required
-from app import login_manager, basic_auth
+from app import login_manager, basic_auth, db
 from app.api import api, api_doc_list
+from app import main
 from app.models import User, Conversation
 from app.sse.views import push_message_to_redis
+from app.auth.oauth2 import require_oauth
+from authlib.integrations.flask_oauth2 import current_token
+
+
+@api.route("/help")
+@require_oauth('readonly')
+def help_api():
+    return render_template("help_api.html",
+            url_root = request.url_root,
+            api_doc = api_doc_list)
 
 
 @api.route("/user/getUnreadMessages", methods=["GET"])
 @login_required
+@require_oauth('readonly')
 def get_unread_messages():
     """Get a list of all unread messages"""
     data = current_user.api_get_unread_messages()
@@ -28,6 +40,7 @@ def set_about_me():
 @api.route("/user/getAPIkey", methods=["GET"])
 @basic_auth.login_required
 def get_api_key():
+    # To remove
     """Returns an api key if http basic auth succeed."""
     data = basic_auth.current_user().get_api_key()
     return jsonify(data)

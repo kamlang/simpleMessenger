@@ -11,6 +11,11 @@ table
   min-width:80%;
 }
 
+.well-sm
+{
+  color:var(--fg-black);
+}
+
 body
 {
   background-image: url("background.png");
@@ -21,6 +26,11 @@ body
   margin-right: auto;
   color:white;
   z-index:1;
+}
+
+code
+{
+font-size:75%;
 }
 
 td, th

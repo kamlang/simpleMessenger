@@ -1,0 +1,30 @@
+ {% extends "parent.html" %}
+ {% block app_content %}
+ <caption align="top">
+    <h2>List of Clients</h2>
+</caption>
+  <table class="table">
+    <thead>
+        <tr class="">
+            <th>Client Name</th>
+            <th>Client Id</th>
+            <th>Client Secret</th>
+            <th>Scope</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for client in clients %}
+        <tr>
+            <td>{{ client.client_name}}</td>
+            <td>{{ client.client_id }}</td>
+            <td>{{ client.client_secret}}</td>
+            <td>{{ client.scope}}</td>
+            {%set authorize_url = url_for("auth.oauth_authorize") + 
+            "?response_type=code&client_id=" + client.client_id + "&scope="+ client.scope%}
+            <td><a href="#">Delete</a> <a href="#">Edit</a>
+              <a href="{{authorize_url}}">Authorize</a> </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

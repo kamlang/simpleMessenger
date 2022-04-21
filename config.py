@@ -13,6 +13,12 @@ class Config:
     MAIL_SUBJECT_PREFIX = "[simpleMessenger] "
     ADMINS = ["admin@simpleMessenger.com"]
     POSTS_PER_PAGE = 7
+    OAUTH2_REFRESH_TOKEN_GENERATOR = True
+    OAUTH2_TOKEN_EXPIRES_IN = {
+                'authorization_code': 3600,
+                'client_credentials':3600,
+                'urn:ietf:params:oauth:grant-type:jwt-bearer': 3600,
+    }
     @staticmethod
     def init_app(app):
         pass

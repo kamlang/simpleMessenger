@@ -36,10 +36,16 @@
       	<a class="nav-link" href="{{url_for('restricted.showall')}}">Admin panel</a>
       </li>
       {%endif%}
-      <li class="nav-item">
-      	<a class="nav-link" href="{{url_for('main.help_api')}}" title="Get details on API.">API</a>
-      </li>
-    </ul>
+      <li class="nav-item dropdown">
+        <a class="dropdown-toggle" data-toggle="dropdown" role="button">API
+        <span class="caret"></span></a>
+        <ul class="dropdown-menu">
+          <li><a href="{{url_for('api.help_api')}}" title="Get details on API.">API Help</a> </li>
+          <li><a href="{{url_for('auth.register_oauth')}}" title="Get your API access">Get Access</a></li>
+          <li><a href="{{url_for('auth.get_oauth_clients')}}" title="See all your apps">My clients</a></li>
+        </ul>
+    </li>
+  </ul>
     {% if current_user.is_authenticated %}
     <ul class="nav navbar-nav navbar-right">
       <li class="nav-item">

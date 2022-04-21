@@ -283,6 +283,9 @@ class User(db.Model, UserMixin, UserApiMixin):
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
     _avatar_hash = db.Column(db.String(32), default="default.png")
 
+    def get_user_id(self):
+        return self.id
+
     def __init__(self,username,password,email,role="User"):
         self.username = username
         self.password = password
@@ -358,7 +361,6 @@ class User(db.Model, UserMixin, UserApiMixin):
             exception = UnauthorizedOperation("Image file is not valid.")
             exception.code = 400
             raise exception
-
 
 class AnonymousUser(AnonymousUserMixin):
     # To avoid error when calling some methods as unauthenticated user.

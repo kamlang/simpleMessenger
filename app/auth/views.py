@@ -8,6 +8,7 @@ from flask import (
     session,
     g,
     abort,
+    jsonify,
 )
 from flask_login import login_user, current_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -16,19 +17,28 @@ from werkzeug.urls import url_parse
 from datetime import datetime
 from werkzeug.utils import secure_filename
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from authlib.integrations.flask_oauth2 import current_token
+from authlib.oauth2 import OAuth2Error
 import os
-from app.models import User, Role
+from app import db
 from app.auth.forms import (
     register_form,
     login_form,
     password_reset_confirmation,
     confirm_username,
+    OauthClientForm,
+    OAuthConfirm,
 )
+from app import csrf
 from app.auth import auth
-from app import db
+from app.main import main
 #from app.email import send_email
 from app.gmail import send_email
-
+from app.models import User, Role
+from app.auth.models import OAuth2Client, OAuth2AuthorizationCode
+from .oauth2 import authorization
+from werkzeug.security import gen_salt
+import time
 ###### Definig some custom decorator
 
 
@@ -47,7 +57,7 @@ def unauthenticated_required(viewFunc):
 
 @auth.route("/login", methods=["GET", "POST"])
 @unauthenticated_required
-def login():  ### Restrict to unauthenticate user
+def login():  # Restrict to unauthenticate user
     form = login_form()
     if form.validate_on_submit():
         username = request.form["username"]
@@ -158,6 +168,93 @@ def send_link(choice):
 def failed():
     return render_template("failed.html")
 
+### OAuth stuff
+
+@auth.route("/oauth/register", methods = ["GET","POST"])
+@login_required
+def register_oauth():
+    """ Here a user can create a new Oauth client that he can use to access his data. """
+    form = OauthClientForm()
+    if form.validate_on_submit():
+        try:
+            client_id = gen_salt(24)
+            client_id_issued_at = int(time.time())
+
+            client = OAuth2Client(
+            client_id=client_id,
+            client_id_issued_at=client_id_issued_at,
+            user_id=current_user.id,
+        )
+            client_metadata = {
+            "client_name": request.form["client_name"],
+            "client_uri": url_for("main.conversations", _external=True),
+            "grant_types": ["authorization_code","refresh_token"],
+            "redirect_uris": [url_for("auth.get_code", _external=True)],
+            "response_types": ["code"],
+            "scope" : request.form["allowed_scope"],
+            "token_endpoint_auth_method": "client_secret_basic"
+        }
+
+            client.set_client_metadata(client_metadata)
+            client.client_secret = gen_salt(48)
+            db.session.add(client)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            raise Exception(e)
+        finally:
+            return redirect(url_for("main.conversations"))
+    return render_template("form.html", form=form, form_name="Register a Client App")
+
+@auth.route("/oauth/clients", methods = ["GET"])
+@login_required
+def get_oauth_clients():
+    # Return list of api clients.
+    try:
+        clients = OAuth2Client.query.filter_by(user_id=current_user.id).all()
+    except Exception as e:
+        print(e)
+    return render_template("show_clients.html",clients=clients)
+
+
+@auth.route("/oauth/authorize", methods = ["GET", "POST"])
+@login_required
+def oauth_authorize():
+    user = current_user._get_current_object()
+    # if user log status is not true (Auth server), then to log it in
+    form = OAuthConfirm()
+    if request.method == 'GET':
+        try:
+            grant = authorization.validate_consent_request(end_user=user)
+        except OAuth2Error as error:
+            return error.error
+        return render_template('authorize.html', form=form, user=user, grant=grant)
+    if form.validate_on_submit():
+        grant_user = user
+    else:
+        grant_user = None
+    return authorization.create_authorization_response(grant_user=grant_user)
+
+@auth.route('/oauth/token', methods=['POST'])
+@csrf.exempt
+def issue_token():
+    return authorization.create_token_response()
+
+
+@auth.route('/oauth/revoke', methods=['POST'])
+@csrf.exempt
+def revoke_token():
+    return authorization.create_endpoint_response('revocation')
+
+@auth.route('/oauth', methods=["GET"])
+@login_required
+def get_code():
+    code = request.args.get("code")
+    client = OAuth2Client.query.join(OAuth2AuthorizationCode, \
+             OAuth2Client.client_id==OAuth2AuthorizationCode.client_id) \
+             .filter(OAuth2AuthorizationCode.code == code, OAuth2Client.user == current_user).first_or_404()
+    return render_template("oauth_code.html",code=code,client=client)
+
 
 def get_username_from_token(token):
     s = Serializer(current_app.config["SECRET_KEY"])
@@ -168,13 +265,14 @@ def get_username_from_token(token):
     return data.get("username")
 
 
-def generate_confirmation_token(username, expiration=3600):
+def generate_confirmation_token(username, expiration=300):
     s = Serializer(current_app.config["SECRET_KEY"], expiration)
     return s.dumps({"username": username})
 
 
 email_argument = {
     "confirmation": {"subject": "Confirm your Account", "template": "/email/confirm"},
+    "oauth_confirmation": {"subject": "Allow access", "template": "/email/confirm_oauth"},
     "password_reset": {"subject": "Password reset", "template": "/email/reset"},
 }
 

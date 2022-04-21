@@ -1,0 +1,25 @@
+{% extends "parent.html" %}
+  {% block app_content %}
+   <div class="well well-sm">
+     <p> Here is your oauth code <i>{{ code }}</i>.</p>
+    <ul>
+      <li><p> You can obtain your access token by issuing the command below from your machine:</p>
+  <p><code>$ curl -u {{client.client_id}}:{{client.client_secret}} \<br> 
+    -XPOST {{url_for("auth.issue_token",_external=True)}} 
+    -F grant_type=authorization_code -F scope={{client.scope}} \<br>-F code={{code}} &gt; token.json</code>
+  <br>
+  <li><p> To access the API you should provide your access token in then Authorization header as below:</p>
+  <p><code>$ curl -H "Authorization: Bearer ${your_access_token}" {{url_for("api.get_help",_external=True)}} </code>
+  <br>
+  <li><p> Now you can access the API from your app. Also not that a refesh token is included.
+    So when your token expired you can request a new one issuing:</p> 
+  <p> <code> $ curl -u {{client.client_id}}:{{client.client_secret}} \<br> 
+    -XPOST {{url_for("auth.issue_token",_external=True)}} -F grant_type=refresh_token \ <br>
+    -F refresh_token=${your_refresh_token} -F scope={{client.scope}}</code>
+    </ul>
+   </div>
+<script>
+
+
+</script>
+  {% endblock %}
