@@ -21,8 +21,8 @@
             <td>{{ client.scope}}</td>
             {%set authorize_url = url_for("auth.oauth_authorize") + 
             "?response_type=code&client_id=" + client.client_id + "&scope="+ client.scope%}
-            <td><a href="#">Delete</a> <a href="#">Edit</a>
-              <a href="{{authorize_url}}">Authorize</a> </td>
+            <td><a href="{{url_for("auth.delete_client", client_id=client.client_id)}}">Delete</a>
+              <a href="{{authorize_url}}">Authorize</a></td>
         </tr>
         {% endfor %}
     </tbody>

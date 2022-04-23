@@ -17,7 +17,6 @@ from werkzeug.urls import url_parse
 from datetime import datetime
 from werkzeug.utils import secure_filename
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
-from authlib.integrations.flask_oauth2 import current_token
 from authlib.oauth2 import OAuth2Error
 import os
 from app import db
@@ -209,11 +208,7 @@ def register_oauth():
 @auth.route("/oauth/clients", methods = ["GET"])
 @login_required
 def get_oauth_clients():
-    # Return list of api clients.
-    try:
-        clients = OAuth2Client.query.filter_by(user_id=current_user.id).all()
-    except Exception as e:
-        print(e)
+    clients = OAuth2Client.query.filter_by(user=current_user).all()
     return render_template("show_clients.html",clients=clients)
 
 
@@ -221,7 +216,6 @@ def get_oauth_clients():
 @login_required
 def oauth_authorize():
     user = current_user._get_current_object()
-    # if user log status is not true (Auth server), then to log it in
     form = OAuthConfirm()
     if request.method == 'GET':
         try:
@@ -245,6 +239,14 @@ def issue_token():
 @csrf.exempt
 def revoke_token():
     return authorization.create_endpoint_response('revocation')
+
+@auth.route('/oauth/delete/<client_id>', methods=["GET"])
+@login_required
+def delete_client(client_id):
+    client = OAuth2Client.query.filter_by(client_id=client_id, user_id=current_user.id).first_or_404()
+    db.session.delete(client)
+    db.session.commit()
+    return redirect(url_for("auth.get_oauth_clients"))
 
 @auth.route('/oauth', methods=["GET"])
 @login_required

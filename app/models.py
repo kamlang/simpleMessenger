@@ -30,6 +30,7 @@ class ApiDict(dict):
     def conversation_to_dict(self,conversation,message_number):
         conversation_dict = {}
         conversation_dict["conversation_uuid"] = conversation.conversation_uuid
+        conversation_dict["link"] = url_for("api.get_conversation",conversation_uuid=conversation.conversation_uuid,_external=True)
         conversation_dict["participants"] = \
                 [user.username for user in conversation.users.all()]
         conversation_dict["messages"] = \
@@ -41,48 +42,50 @@ class UserApiMixin():
     """Extends User class so it can handle some api functionality
         Exceptions are handled by the app error_handler."""
 
-    def get_api_key(self):
-        self.api_key = str(uuid.uuid4())
-        db.session.commit()
-        api_data = ApiDict()
-        api_data["items"].append({"API key": self.api_key})
-        api_data["message"] = "You can know use your API key using Autorization header."
-        return api_data
-
-    def api_get_conversations(self,message_number):
+    def api_get_conversations(self,page,conversations_per_page,message_number=3):
         """ Return a list of all conversations, including participants and the most recent messages
         . The number of message returned if defined by message_number argument. """
         conversations = (
             Conversation.query.filter(Conversation.users.contains(self))
             .order_by(Conversation.timestamp.desc())
-        )
+            ).paginate(page, conversations_per_page, False)
         api_data = ApiDict()
-        for conversation in conversations:
+        for conversation in conversations.items:
+            # Return a few messages then put the link to the conversation.
             api_data["items"].append(api_data.conversation_to_dict(conversation,message_number))
+            # Don't return the below if only one page
+            api_data["next_page"] = url_for("api.get_conversations",page=conversations.next_num)
+            api_data["previous_page"] = url_for("api.get_conversations",page=conversations.prev_num)
         return api_data
 
 
-    def api_get_unread_messages(self):
-        """ Return a list containing all the unread messages of a user. Each message is
-        represented as a dictionary. Not really satisfied with that. """
-        conversation_users = ConversationUsers.query.join(
+    def api_get_unread_messages(self,page,conversations_per_page):
+        """ Returns a list of conversations which contains unread messages. Each message is
+        represented as a dictionary. """
+        conversation_users = (
+            ConversationUsers.query.join(
             Conversation, Conversation.id == ConversationUsers.conversation_id
             ).filter(ConversationUsers.user_id == self.id,
-            ConversationUsers.unread_messages > 0).all()
+            ConversationUsers.unread_messages > 0)
+            ).paginate(page, conversations_per_page, False)
+
         api_data = ApiDict()
-        if not conversation_users:
+        if not conversation_users.items:
             api_data["message"] =  "You don'have any unread messages."
             return api_data
 
-        for item in conversation_users:
+        for item in conversation_users.items:
             conversation = Conversation.query.get(item.conversation_id)
-            # only get the the last nth unread messages
             api_data["items"].append(api_data.conversation_to_dict(conversation,item.unread_messages))
+            # Don't return the below if only one page
+            api_data["next_page"] = url_for("api.get_unread_messages",page=conversation_users.next_num)
+            api_data["previous_page"] = url_for("api.get_unread_messages",page=conversation_users.prev_num)
         return api_data
     
     def api_get_conversation(self,conversation_uuid,message_number):
         conversation = Conversation.get_conversation_by_uuid(conversation_uuid) 
         api_data = ApiDict()
+        # paginate_converstion
         api_data["items"].append(api_data.conversation_to_dict(conversation,message_number))
         return api_data
 
@@ -266,7 +269,6 @@ class User(db.Model, UserMixin, UserApiMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(20), unique=True)
     password_hash = db.Column(db.String(100))
-    api_key = db.Column(db.String(100),default=None)
     email = db.Column(db.String(155))
     roles = db.relationship("Role", secondary="user_roles")
     confirmed = db.Column(db.Boolean, default=False)
