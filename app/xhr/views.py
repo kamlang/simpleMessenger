@@ -40,9 +40,9 @@ def get_user_info(username):
 @with_csrf_validation
 def delete_conversation(conversation_uuid):
     # Accessed via xhr to delete a conversation.
-    conversation = Conversation.get_conversation_by_uuid(conversation_uuid)
+    conversation = current_user.get_conversation_by_uuid(conversation_uuid)
     try:
-        conversation.delete()
+        current_user.delete_conversation(conversation)
     except:
         abort(403)
 
@@ -52,9 +52,9 @@ def delete_conversation(conversation_uuid):
 @with_csrf_validation
 def leave_conversation(conversation_uuid):
     # Accessed via xhr to leave a conversation.
-    conversation = Conversation.get_conversation_by_uuid(conversation_uuid)
+    conversation = current_user.get_conversation_by_uuid(conversation_uuid)
     try:
-        conversation.remove_user()
+        current_user.leave_conversation(conversation)
     except:
         abort(403)
 
@@ -65,7 +65,7 @@ def leave_conversation(conversation_uuid):
 def mark_as_read(conversation_uuid):
     """Accessed via xhr to mark the conversation as read when user is currently browsing it
     also reset unread message count"""
-    conversation = Conversation.get_conversation_by_uuid(conversation_uuid)
+    conversation = current_user.get_conversation_by_uuid(conversation_uuid)
     try:
         conversation.reset_unread_messages()
         return Response(status=204)

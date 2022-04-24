@@ -9,12 +9,14 @@ from datetime import datetime
 from app import db, login_manager
 from app.sse.views import push_message_to_redis
 from werkzeug.exceptions import HTTPException
+from authlib.integrations.flask_oauth2 import current_token
+
 
 class UnauthorizedOperation(HTTPException):
     code = 403
 
 class ApiDict(dict):
-    """Defining a custom dict with some methods to convert some objects to dictionnary."""
+    """Defining a custom dict with some methods to convert some objects to dictionary."""
     def __init__(self):
         self["items"] = []
         self["message"] = ""
@@ -27,24 +29,36 @@ class ApiDict(dict):
         message_dict["time"] = message.timestamp
         return message_dict
 
-    def conversation_to_dict(self,conversation,message_number):
+    def conversation_to_dict(self,conversation,page,messages_per_page, return_page_link = False):
         conversation_dict = {}
         conversation_dict["conversation_uuid"] = conversation.conversation_uuid
-        conversation_dict["link"] = url_for("api.get_conversation",conversation_uuid=conversation.conversation_uuid,_external=True)
+        conversation_dict["url"] = url_for("api.get_conversation",conversation_uuid=conversation.conversation_uuid,_external=True)
         conversation_dict["participants"] = \
                 [user.username for user in conversation.users.all()]
+        messages = conversation.messages.paginate(page, messages_per_page, False)
+
         conversation_dict["messages"] = \
-                [self.message_to_dict(message) for message in conversation.messages.all( )[:message_number]]
+                [self.message_to_dict(message) for message in messages.items]
+        if messages.has_next and return_page_link:
+            conversation_dict["next_page"] =  \
+            url_for("api.get_conversation",conversation_uuid=conversation.conversation_uuid,_external=True,
+                page=messages.next_num)
+        if messages.has_prev and return_page_link:
+            conversation_dict["previous_page"] = \
+            url_for("api.get_conversation",conversation_uuid=conversation.conversation_uuid,_external=True,
+                page=messages.prev_num) 
+        conversation_dict["number_of_items"] = messages.total
+        conversation_dict["number_of_pages"] = messages.pages
         return conversation_dict
 
 
 class UserApiMixin():
     """Extends User class so it can handle some api functionality
-        Exceptions are handled by the app error_handler."""
+       Exceptions are handled by the app error_handler."""
 
-    def api_get_conversations(self,page,conversations_per_page,message_number=3):
-        """ Return a list of all conversations, including participants and the most recent messages
-        . The number of message returned if defined by message_number argument. """
+    def api_get_conversations(self,page,conversations_per_page,messages_per_page):
+        """ Return a list of all conversations, including participants and the most recents messages.
+        The number of message returned if defined by messages_per_page argument. """
         conversations = (
             Conversation.query.filter(Conversation.users.contains(self))
             .order_by(Conversation.timestamp.desc())
@@ -52,10 +66,14 @@ class UserApiMixin():
         api_data = ApiDict()
         for conversation in conversations.items:
             # Return a few messages then put the link to the conversation.
-            api_data["items"].append(api_data.conversation_to_dict(conversation,message_number))
+            api_data["items"].append(api_data.conversation_to_dict(conversation,page=1,messages_per_page=messages_per_page))
             # Don't return the below if only one page
-            api_data["next_page"] = url_for("api.get_conversations",page=conversations.next_num)
-            api_data["previous_page"] = url_for("api.get_conversations",page=conversations.prev_num)
+            if conversations.has_next:
+                api_data["next_page"] = url_for("api.get_conversations",page=conversations.next_num)
+            if conversations.has_prev:
+                api_data["previous_page"] = url_for("api.get_conversations",page=conversations.prev_num)
+            api_data["number_of_items"] = conversations.total
+            api_data["number_of_pages"] = conversations.pages
         return api_data
 
 
@@ -76,17 +94,23 @@ class UserApiMixin():
 
         for item in conversation_users.items:
             conversation = Conversation.query.get(item.conversation_id)
-            api_data["items"].append(api_data.conversation_to_dict(conversation,item.unread_messages))
+            api_data["items"].append(api_data.conversation_to_dict(conversation,page=1,
+                messages_per_page = item.unread_messages))
             # Don't return the below if only one page
-            api_data["next_page"] = url_for("api.get_unread_messages",page=conversation_users.next_num)
-            api_data["previous_page"] = url_for("api.get_unread_messages",page=conversation_users.prev_num)
-        return api_data
+            if conversation_users.has_next:
+                api_data["next_page"] = url_for("api.get_unread_messages",page=conversation_users.next_num) 
+            if conversation_users.has_prev:
+                api_data["previous_page"] = url_for("api.get_unread_messages",page=conversation_users.prev_num)         
+            api_data["number_of_items"] = conversations_users.total
+            api_data["number_of_pages"] = conversations_users.pages
+            return api_data
     
-    def api_get_conversation(self,conversation_uuid,message_number):
-        conversation = Conversation.get_conversation_by_uuid(conversation_uuid) 
+    def api_get_conversation(self,conversation_uuid,page,messages_per_page):
+        conversation = self.get_conversation_by_uuid(conversation_uuid) 
+        print(conversation)
         api_data = ApiDict()
         # paginate_converstion
-        api_data["items"].append(api_data.conversation_to_dict(conversation,message_number))
+        api_data["items"].append(api_data.conversation_to_dict(conversation,page,messages_per_page,return_page_link=True))
         return api_data
 
     
@@ -98,31 +122,31 @@ class UserApiMixin():
         return api_data
 
     def api_add_message_to_conversation(self,conversation_uuid,message_content):
-        conversation = Conversation.get_conversation_by_uuid(conversation_uuid)
+        conversation = self.get_conversation_by_uuid(conversation_uuid)
         message = Message(content=message_content,sender_id=self.id)
-        conversation.add_message(message)
+        self.add_message_to_conversation(conversation,message)
         push_message_to_redis(conversation,message_content)
         api_data = ApiDict()
         api_data["message"] = "Message has been successfully added to the conversation"
         return api_data
 
     def api_delete_conversation(self,conversation_uuid):
-        conversation = Conversation.get_conversation_by_uuid(conversation_uuid)
-        conversation.delete()
+        conversation = self.get_conversation_by_uuid(conversation_uuid)
+        self.delete_conversation(conversation)
         api_data = ApiDict()
         api_data["message"] = "Conversation has been successfully deleted."
         return api_data
 
     def api_add_users(self,conversation_uuid,username_list):
-        conversation = Conversation.get_conversation_by_uuid(conversation_uuid)
-        conversation.add_users(username_list)
+        conversation = self.get_conversation_by_uuid(conversation_uuid)
+        self.add_users_to_conversation(conversation,username_list)
         api_data = ApiDict()
         api_data["message"] = "All users have been added to the conversation."
         return api_data
 
     def api_leave_conversation(self,conversation_uuid):
-        conversation = Conversation.get_conversation_by_uuid(conversation_uuid)
-        conversation.remove_user()
+        conversation = self.get_conversation_by_uuid(conversation_uuid)
+        self.leave_conversation(conversation)
         api_data = ApiDict()
         api_data["message"] = "You have successfully left the conversation"
         return api_data
@@ -176,58 +200,14 @@ class Conversation(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     conversation_uuid = db.Column(db.String(100), unique=True)
 
-    def __init__(self):
-        self.admin = current_user
-        self.users.append(current_user)
+    def __init__(self,admin):
+        self.admin = admin
+        self.users.append(admin)
         self.conversation_uuid = str(uuid.uuid4())
         db.session.commit()
 
-    def delete(self):
-        if current_user == self.admin:
-            db.session.delete(self)
-            db.session.commit()
-        else:
-            raise UnauthorizedOperation("Only the admin of a conversation can delete it.")
-
-    @classmethod
-    def get_conversation_by_uuid(cls, conversation_uuid):
-        conversation = cls.query.filter_by(
-            conversation_uuid=str(conversation_uuid)
-        ).first_or_404()
-        if current_user in conversation.users:
-            return conversation
-        raise UnauthorizedOperation("Only participants which belongs to a conversation can access it.")
-
-    def remove_user(self):
-        """ When a user choose to leave a conversation it has to be removed from it.
-        if admin left it is replaced with the user which belongs to the conversation for the longest time
-        If not user left, then conversation is deleted."""
-        if current_user in self.users:
-            print("in 1st if")
-            self.users.remove(current_user)
-            if self.admin == current_user:
-                try:
-                    self.admin = self.users[0]
-                except:
-                    db.session.delete(self)
-            db.session.commit()
-            print("after commit")
-        else:
-            print("in 1st else")
-            raise UnauthorizedOperation("Only a user which already belongs to a conversation can be removed.") 
 
 
-    def add_users(self, username_list):
-        if current_user == self.admin:
-            for username in username_list:
-                user = User.query.filter_by(username=username).first()
-                if user:
-                    self.users.append(user)
-                else:
-                    raise UnauthorizedOpersation("User "+ user + " does not exist.")
-            db.session.commit()
-        else:
-            raise UnauthorizedOperation("Only admin of a conversation can add users.")
 
     def _increment_unread_messages(self, user_list):
         for user in user_list:
@@ -242,19 +222,6 @@ class Conversation(db.Model):
         ).first_or_404()
         q.unread_messages = 0
         db.session.commit()
-
-    def add_message(self, message):
-        if current_user in self.users:
-            self.timestamp = datetime.utcnow()
-            self.messages.append(message)
-            # Add +1 to new message count for all users in the conversation
-            self._increment_unread_messages(self.users)
-            db.session.commit()
-        else:
-            raise UnauthorizedOperation(
-                "Only users which are participants of a conversation can add message."
-            )
-
 
 class Message(db.Model):
     __tablename__ = "messages"
@@ -286,7 +253,9 @@ class User(db.Model, UserMixin, UserApiMixin):
     _avatar_hash = db.Column(db.String(32), default="default.png")
 
     def get_user_id(self):
+        """ For OAuth compatibility """
         return self.id
+
 
     def __init__(self,username,password,email,role="User"):
         self.username = username
@@ -307,8 +276,59 @@ class User(db.Model, UserMixin, UserApiMixin):
             .paginate(page, current_app.config["POSTS_PER_PAGE"], False)
         )
         return conversations
+
+    def add_message_to_conversation(self,conversation, message):
+        if self in conversation.users:
+            conversation.timestamp = datetime.utcnow()
+            conversation.messages.append(message)
+            # Add +1 to new message count for all users in the conversation
+            conversation._increment_unread_messages(self.users)
+            db.session.commit()
+        else:
+            raise UnauthorizedOperation(
+                "Only users which are participants of a conversation can add message."
+                )
+
+    def get_conversation_by_uuid(self, conversation_uuid):
+        conversation = (
+            Conversation.query.filter(Conversation.users.contains(self)).
+            filter_by(conversation_uuid=str(conversation_uuid)).first_or_404()
+            )
+        return conversation
     
-    
+    def delete_conversation(self,conversation):
+        if conversation.admin == self:
+            db.session.delete(self)
+            db.session.commit()
+        else:
+            raise UnauthorizedOperation("Only the admin of a conversation can delete it.")
+
+    def leave_conversation(self,conversation):
+        """ When a user choose to leave a conversation it has to be removed from it.
+        if admin left it is replaced with the user which belongs to the conversation for the longest time
+        If not user left, then conversation is deleted."""
+        if self in conversation.users:
+            conversation.users.remove(self)
+            if conversation.admin == self:
+                try:
+                    conversation.admin = conversation.users[0]
+                except:
+                    db.session.delete(conversation)
+            db.session.commit()
+        else:
+            raise UnauthorizedOperation("Only a user which already belongs to a conversation can be removed from it.") 
+
+    def add_users_to_conversation(self,conversation, username_list):
+        if self  == conversation.admin:
+            for username in username_list:
+                user = User.query.filter_by(username=username).first()
+                if user:
+                    conversation.users.append(user)
+                else:
+                    raise UnauthorizedOpersation("User "+ user + " does not exist.")
+            db.session.commit()
+        else:
+            raise UnauthorizedOperation("Only the admin of a conversation can add users.")
     @property
     def password(self):
         raise AttributeError("Password is not a readable attribute")

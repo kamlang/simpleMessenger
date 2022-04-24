@@ -38,7 +38,7 @@ def home():
 @main.route("/create_conversation")
 @login_required
 def new_conversation():
-    new_conversation = Conversation()
+    new_conversation = Conversation(admin=current_user)
     return redirect(
         url_for(
             "main.conversation", conversation_uuid=new_conversation.conversation_uuid
@@ -87,13 +87,13 @@ def conversation(conversation_uuid):
     form_send = sendReply()
     page = request.args.get("page", 1, type=int)
 
-    conversation = Conversation.get_conversation_by_uuid(conversation_uuid)
+    conversation = current_user.get_conversation_by_uuid(conversation_uuid)
 
     if form_add.validate_on_submit():
         # Add a list of user to a conversation. Only admin of a conversation can add a user.
         username_list = form_add.usernames.data.split()
         try:
-            conversation.add_users(username_list)
+            current_user.add_users_to_conversation(conversation,username_list)
         except:
             abort(403)
         return redirect(

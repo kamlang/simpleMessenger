@@ -7,7 +7,6 @@ from app.sse.views import push_message_to_redis
 from app.auth.oauth2 import require_oauth
 from authlib.integrations.flask_oauth2 import current_token
 
-
 @api.route("/help")
 def help_api():
     return render_template("help_api.html",
@@ -22,7 +21,6 @@ def get_unread_messages():
     page = request.args.get("page", 1, type=int)
     conversations_per_page = request.args.get("conversations", 10, type=int)
     data = current_token.user.api_get_unread_messages(page,conversations_per_page)
-    print(data)
     return jsonify(data)
 
 
@@ -39,11 +37,15 @@ def set_about_me():
 @api.route("/user/getConversations", methods=["GET"])
 @require_oauth(['read','modify'],operator='OR')
 def get_conversations():
-    """Returns all conversations of a user, you can specify the number of conversations to return per page.
-    Use a GET request with query string: ?conversations=3 default is 10."""
+    """Returns all conversations of a user, you can specify the number of conversations to return per page
+    and also the number of messages returned per conversations.
+    Use a GET request with query string: 
+        ?messages=3 default is 1.
+        ?conversations=3 default is 10."""
     page = request.args.get("page", 1, type=int)
     conversations_per_page = request.args.get("conversations", 10, type=int)
-    data = current_token.user.api_get_conversations(page,conversations_per_page)
+    messages_per_page = request.args.get("messages", 1, type=int)
+    data = current_token.user.api_get_conversations(page,conversations_per_page,messages_per_page)
     return jsonify(data)
 
 
@@ -53,8 +55,8 @@ def get_conversation(conversation_uuid):
     """Returns messages of a specific conversation, you can specify the number of messages to return per page.
     Use query string parameter "messages" i.e /?messages=3 default is 10."""
     page = request.args.get("page", 1, type=int)
-    message_number = request.args.get("messages", 10, type=int)
-    data = current_token.user.api_get_conversation(conversation_uuid, message_number)
+    messages_per_page  = request.args.get("messages", 10, type=int)
+    data = current_token.user.api_get_conversation(conversation_uuid,page,messages_per_page)
     return jsonify(data)
 
 
