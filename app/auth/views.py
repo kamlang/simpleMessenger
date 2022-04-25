@@ -34,7 +34,7 @@ from app.main import main
 #from app.email import send_email
 from app.gmail import send_email
 from app.models import User, Role
-from app.auth.models import OAuth2Client, OAuth2AuthorizationCode
+from app.auth.models import OAuth2Client, OAuth2AuthorizationCode,OAuth2Token
 from .oauth2 import authorization
 from werkzeug.security import gen_salt
 import time
@@ -244,6 +244,8 @@ def revoke_token():
 @login_required
 def delete_client(client_id):
     client = OAuth2Client.query.filter_by(client_id=client_id, user_id=current_user.id).first_or_404()
+    tokens = OAuth2Token.query.filter_by(client_id=client_id).all()
+    for token in tokens: token.revoked = True
     db.session.delete(client)
     db.session.commit()
     return redirect(url_for("auth.get_oauth_clients"))

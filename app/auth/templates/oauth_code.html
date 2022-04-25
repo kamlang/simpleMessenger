@@ -3,24 +3,25 @@
    <div class="well well-sm">
     <ul>
       <li><p> You can now obtain your access token by issuing the command below from your machine:</p>
-      <br>
         <code>$ curl -u {{client.client_id}}:{{client.client_secret}} \<br> 
         -XPOST {{url_for("auth.issue_token",_external=True)}} 
         -F grant_type=authorization_code -F scope={{client.scope}} \<br>-F code={{code}} &gt; token.json</code>
     <br>
+    <br>
     <li><p> To access the API you should provide your access token in then Authorization header as below:</p>
       <code>$ curl -H "Authorization: Bearer ${your_access_token}" {{url_for("api.get_help",_external=True)}} </code>
     <br>
+    <br>
     <li><p> Now you can access the API from your app. Also note that a refesh token is included.
     So when your token expired you can request a new one issuing:</p> 
-      <br>
       <code> $ curl -u {{client.client_id}}:{{client.client_secret}} \<br> 
       -XPOST {{url_for("auth.issue_token",_external=True)}} -F grant_type=refresh_token \ <br>
       -F refresh_token=${your_refresh_token} -F scope={{client.scope}}</code>
       <br>
-    <li><p> You can also save you credentials locally:</p>
       <br>
+    <li><p> You can also save you credentials locally:</p>
       <code>$ echo '{"client_id":"{{client.client_id}}","client_secret":"{{client.client_secret}}"}' &gt; credentials.json </code>
+      <br>
     </ul>
    </div>
   {% endblock %}

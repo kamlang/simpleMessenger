@@ -1,5 +1,5 @@
 from flask import redirect, jsonify, request, abort, Response, url_for
-from flask_login import login_required
+from flask_login import login_required, current_user
 from flask_wtf.csrf import validate_csrf
 from functools import wraps
 from app.models import User, Conversation
@@ -67,7 +67,7 @@ def mark_as_read(conversation_uuid):
     also reset unread message count"""
     conversation = current_user.get_conversation_by_uuid(conversation_uuid)
     try:
-        conversation.reset_unread_messages()
+        conversation.reset_unread_messages(current_user)
         return Response(status=204)
     except:
         abort(403)

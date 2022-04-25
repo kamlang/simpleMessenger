@@ -49,6 +49,7 @@ def new_conversation():
 @main.route("/conversations", methods=["GET", "POST"])
 @login_required
 def conversations():
+    """ Modifier pour retourner dict ? """
     form = editUser()
     if form.validate_on_submit():
         if form.about_me.data:
@@ -83,6 +84,7 @@ def conversations():
 @main.route("/conversation/<uuid:conversation_uuid>", methods=["GET", "POST"])
 @login_required
 def conversation(conversation_uuid):
+    """ Modifier pour retourner dict ? """
     form_add = addUserConversation()
     form_send = sendReply()
     page = request.args.get("page", 1, type=int)
@@ -103,20 +105,23 @@ def conversation(conversation_uuid):
     if form_send.validate_on_submit():  # Adding message to a conversation
         content = form_send.content.data
         message = Message(sender=current_user, content=content)
-        conversation.add_message(message)
+        current_user.add_message_to_conversation(conversation,message)
         push_message_to_redis(conversation, content)
-        #    return Response(status=204)
         return redirect(
             url_for("main.conversation", conversation_uuid=conversation_uuid)
         )
 
-    conversation.reset_unread_messages()
+    conversation.reset_unread_messages(current_user)
+    
+#    data = current_user.api_get_conversation(self,conversation_uuid,page,
+#            message_per_page=current_app.config["POSTS_PER_PAGE"])
+
     users = conversation.users.all() 
     messages = conversation.messages.paginate(
         page, current_app.config["POSTS_PER_PAGE"], False
     )
     admin = conversation.admin.username
-    # TODO: fix duplicate code
+    # TODO: fix duplicate code 
     next_url = (
         url_for(
             "main.conversation",
@@ -146,6 +151,7 @@ def conversation(conversation_uuid):
         admin=admin,
         conversation=conversation,
     )
+
 
 @main.before_request
 def before_request():
