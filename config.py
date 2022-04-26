@@ -17,7 +17,6 @@ class Config:
     OAUTH2_REFRESH_TOKEN_GENERATOR = True
     OAUTH2_TOKEN_EXPIRES_IN = {
                 'authorization_code': 3600,
-                'refresh_token': 864000,
                 'client_credentials':3600,
                 'urn:ietf:params:oauth:grant-type:jwt-bearer': 3600,
     }
