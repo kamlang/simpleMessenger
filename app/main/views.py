@@ -5,19 +5,12 @@ from flask import (
     redirect,
     render_template,
     current_app,
-    session,
-    g,
-    jsonify,
     abort,
     Response,
 )
-from flask_login import login_user, current_user, logout_user, login_required
-from werkzeug.security import generate_password_hash, check_password_hash
-from functools import wraps
+from flask_login import current_user, login_required
 from werkzeug.urls import url_parse
 from datetime import datetime
-from werkzeug.utils import secure_filename
-import time
 from flask_wtf.csrf import validate_csrf
 from app.models import User, Role, Message, Conversation
 from app.main.forms import editUser, sendReply, createConversation, addUserConversation
