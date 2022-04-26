@@ -29,15 +29,19 @@ class OAuth2AuthorizationCode(db.Model, OAuth2AuthorizationCodeMixin):
 
 class OAuth2Token(db.Model, OAuth2TokenMixin):
     __tablename__ = 'oauth2_token'
-    EXPIRES_IN = 3600
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(
         db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'))
     user = db.relationship('User')
 
-    def is_refresh_token_active(self):
+    """    def is_refresh_token_active(self):
         if self.revoked:
             return False
         expires_at = self.issued_at + self.expires_in * 2
-        return expires_at >= time.time()
+        return expires_at >= time.time() """
+
+    def is_refresh_token_active(self):
+        if OAuth2Client.query.filter_by(client_id=self.client_id).first():
+            return True
+        return False
