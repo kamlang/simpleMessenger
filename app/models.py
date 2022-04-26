@@ -24,7 +24,7 @@ class ApiDict(dict):
 
     def message_to_dict(self,message):
         message_dict = {}
-        message_dict["from"] = message.sender.username if message.sender else "None"
+        message_dict["sender"] = message.sender.username if message.sender else "None"
         message_dict["message"] = message.content
         message_dict["time"] = message.timestamp
         return message_dict
@@ -34,6 +34,7 @@ class ApiDict(dict):
         conversation_dict["conversation_uuid"] = conversation.conversation_uuid
         conversation_dict["admin"] = conversation.admin.username
         conversation_dict["url"] = url_for("api.get_conversation",conversation_uuid=conversation.conversation_uuid,_external=True)
+        conversation_dict["unread_messages"] = self.get_number_of_unread_messages(conversation)
         conversation_dict["participants"] = \
                 [user.username for user in conversation.users.all()]
         messages = conversation.messages.paginate(page, messages_per_page, False)
