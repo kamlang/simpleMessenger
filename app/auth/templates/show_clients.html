@@ -22,7 +22,7 @@
             {%set authorize_url = url_for("auth.oauth_authorize") + 
             "?response_type=code&client_id=" + client.client_id + "&scope="+ client.scope%}
             <td><a href="{{url_for("auth.delete_client", client_id=client.client_id)}}">Delete</a>
-              <a href="{{authorize_url}}">Authorize</a></td>
+              {% if not client.has_user_consent() %}<a href="{{authorize_url}}">Authorize</a>{%endif%}</td>
         </tr>
         {% endfor %}
     </tbody>

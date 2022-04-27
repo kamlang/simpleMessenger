@@ -202,7 +202,7 @@ def register_oauth():
             db.session.rollback()
             raise Exception(e)
         finally:
-            return redirect(url_for("main.conversations"))
+            return redirect(url_for("auth.get_oauth_clients"))
     return render_template("form.html", form=form, form_name="Register a Client App")
 
 @auth.route("/oauth/clients", methods = ["GET"])
@@ -245,7 +245,8 @@ def revoke_token():
 def delete_client(client_id):
     client = OAuth2Client.query.filter_by(client_id=client_id, user_id=current_user.id).first_or_404()
     tokens = OAuth2Token.query.filter_by(client_id=client_id).all()
-    for token in tokens: token.revoked = True
+    for token in tokens: 
+        token.revoked = True
     db.session.delete(client)
     db.session.commit()
     return redirect(url_for("auth.get_oauth_clients"))

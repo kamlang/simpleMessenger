@@ -17,6 +17,11 @@ class OAuth2Client(db.Model, OAuth2ClientMixin):
         db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'))
     user = db.relationship('User')
 
+    def has_user_consent(self):
+        if OAuth2Token.query.filter_by(client_id = self.client_id).first():
+            return True
+        return False
+
 
 class OAuth2AuthorizationCode(db.Model, OAuth2AuthorizationCodeMixin):
     __tablename__ = 'oauth2_code'
@@ -42,6 +47,6 @@ class OAuth2Token(db.Model, OAuth2TokenMixin):
         return expires_at >= time.time() """
 
     def is_refresh_token_active(self):
-        if OAuth2Client.query.filter_by(client_id=self.client_id).first():
+        if OAuth2Client.query.filter_by(client_id = self.client_id).first():
             return True
         return False
