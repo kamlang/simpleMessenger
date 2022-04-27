@@ -3,9 +3,10 @@ from app import red
 from app.sse import sse
 from flask_login import current_user, login_required
 
-def push_message_to_redis(conversation, content):
+def push_message_to_redis(conversation,message):
     """Each time a user post a message in a conversation it's also pushed to the redis channel
     of each participants."""
+
     users = conversation.users.all()
     for user in users:
         participants = " ".join(
@@ -13,10 +14,10 @@ def push_message_to_redis(conversation, content):
         )
         redis_message = {
             "event": "new_message",
-            "from": current_user.username,
-            "avatar_name": current_user.avatar,
+            "from": message.sender,
+            "avatar_name": message.sender.avatar,
             "conversation_uuid": conversation.conversation_uuid,
-            "content": content,
+            "content": message.content,
             "participants": participants,
             "unread_messages": user.get_number_of_unread_messages(conversation),
         }
@@ -39,8 +40,5 @@ def stream(username):
     if current_user.username == username:
         response = Response(event_stream(username), 
                 content_type="text/event-stream; charset=utf-8")
-        # Add custom headers to fix event stream timeout with nginx
-#        response.headers["X-Accel-Buffering"] = "no"
-#        response.headers["Connection"] = "keep-alive"
         return response
     abort(403)

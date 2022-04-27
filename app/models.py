@@ -20,7 +20,8 @@ class ApiDict(dict):
     def __init__(self):
         self["items"] = []
         self["message"] = ""
-        self["help"] = url_for("api.get_help")
+        self["links"] = {}
+        self["links"]["help"] = url_for("api.get_help",_external = True)
 
     def message_to_dict(self,message):
         message_dict = {}
@@ -31,10 +32,10 @@ class ApiDict(dict):
 
     def conversation_to_dict(self,conversation,page,messages_per_page, return_page_link = False):
         conversation_dict = {}
+        conversation_dict["links"] = {}
         conversation_dict["conversation_uuid"] = conversation.conversation_uuid
         conversation_dict["admin"] = conversation.admin.username
-        conversation_dict["url"] = url_for("api.get_conversation",conversation_uuid=conversation.conversation_uuid,_external=True)
-        conversation_dict["unread_messages"] = self.get_number_of_unread_messages(conversation)
+        conversation_dict["links"]["url"] = url_for("api.get_conversation",conversation_uuid=conversation.conversation_uuid,_external=True)
         conversation_dict["participants"] = \
                 [user.username for user in conversation.users.all()]
         messages = conversation.messages.paginate(page, messages_per_page, False)
@@ -43,16 +44,17 @@ class ApiDict(dict):
                 [self.message_to_dict(message) for message in messages.items]
 
         if messages.has_next and return_page_link:
-            conversation_dict["next_page"] =  \
+            conversation_dict["links"]["next_page"] =  \
             url_for("api.get_conversation",conversation_uuid=conversation.conversation_uuid,_external=True,
                 page=messages.next_num)
         if messages.has_prev and return_page_link:
-            conversation_dict["previous_page"] = \
+            conversation_dict["links"]["previous_page"] = \
             url_for("api.get_conversation",conversation_uuid=conversation.conversation_uuid,_external=True,
                 page=messages.prev_num) 
 
         conversation_dict["number_of_items"] = messages.total
         conversation_dict["number_of_pages"] = messages.pages
+        conversation_dict["links"]["add_message"] = url_for("api.add_message",conversation_uuid = conversation.conversation_uuid,_external=True)
         return conversation_dict
 
 
@@ -70,13 +72,11 @@ class UserApiMixin():
 
         api_data = ApiDict()
         for conversation in conversations.items:
-            # Return a few messages then put the link to the conversation.
             api_data["items"].append(api_data.conversation_to_dict(conversation,page=1,messages_per_page=messages_per_page))
-            # Don't return the below if only one page
             if conversations.has_next:
-                api_data["next_page"] = url_for("api.get_conversations",page=conversations.next_num)
+                api_data["links"]["next_page"] = url_for("api.get_conversations",page=conversations.next_num)
             if conversations.has_prev:
-                api_data["previous_page"] = url_for("api.get_conversations",page=conversations.prev_num)
+                api_data["links"]["previous_page"] = url_for("api.get_conversations",page=conversations.prev_num)
             api_data["number_of_items"] = conversations.total
             api_data["number_of_pages"] = conversations.pages
         return api_data
@@ -103,9 +103,9 @@ class UserApiMixin():
                 messages_per_page = item.unread_messages))
             # Don't return the below if only one page
             if conversation_users.has_next:
-                api_data["next_page"] = url_for("api.get_unread_messages",page=conversation_users.next_num) 
+                api_data["links"]["next_page"] = url_for("api.get_unread_messages",page=conversation_users.next_num) 
             if conversation_users.has_prev:
-                api_data["previous_page"] = url_for("api.get_unread_messages",page=conversation_users.prev_num)         
+                api_data["links"]["previous_page"] = url_for("api.get_unread_messages",page=conversation_users.prev_num)         
             api_data["number_of_items"] = conversations_users.total
             api_data["number_of_pages"] = conversations_users.pages
         return api_data
@@ -126,11 +126,9 @@ class UserApiMixin():
 
     def api_add_message_to_conversation(self,conversation_uuid,message_content):
         conversation = self.get_conversation_by_uuid(conversation_uuid)
-        message = Message(content=message_content,sender_id=self.id)
+        message = Message(sender=self, content=message_content)
         self.add_message_to_conversation(conversation,message)
-
-        push_message_to_redis(conversation,message_content)
-
+        push_message_to_redis(conversation,message)
         api_data = ApiDict()
         api_data["message"] = "Message has been successfully added to the conversation"
         return api_data
