@@ -169,11 +169,10 @@ def register_oauth():
     """ Here a user can create a new Oauth client that he can use to access his data. """
     form = OauthClientForm()
     if form.validate_on_submit():
-        client_name = request.form["client_name"],
-        client_scope = request.form["allowed_scope"],
-        print(type(client_name))
+        client_name = request.form["client_name"]
+        client_scope = request.form["allowed_scope"]
         try:
-            current_user.create_oauth2_client(client_name[0],client_scope)
+            current_user.create_oauth2_client(client_name,client_scope)
         except Exception as e:
             db.session.rollback()
             raise Exception(e)
@@ -219,14 +218,14 @@ def revoke_token():
 @auth.route('/oauth/delete/<client_id>', methods=["GET"])
 @login_required
 def delete_client(client_id):
-    current_user.delete_oauth2_client()
+    current_user.delete_oauth2_client(client_id)
     return redirect(url_for("auth.get_oauth_clients"))
 
 @auth.route('/oauth', methods=["GET"])
 @login_required
 def get_code():
     code = request.args.get("code")
-    client = get_oauth2_client_from_code(code)
+    client = current_user.get_oauth2_client_from_code(code)
     return render_template("oauth_code.html",code=code,client=client)
 
 

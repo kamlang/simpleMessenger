@@ -311,8 +311,8 @@ class OAuth2User():
         clients = OAuth2Client.query.filter_by(user=self).all()
         return clients
 
-    def delete_oauth2_client(self,client_id):
-        client = OAuth2Client.query.filter_by(client_id=client_id, user_id=current_user.id).first_or_404()
+    def delete_oauth2_client(self,client_id)):
+        client = OAuth2Client.query.filter_by(client_id=client_id, user_id=self.id).first_or_404()
         tokens = OAuth2Token.query.filter_by(client_id=client_id).all()
         for token in tokens: 
             token.revoked = True
