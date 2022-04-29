@@ -10,12 +10,13 @@
             <th>Client Id</th>
             <th>Client Secret</th>
             <th>Scope</th>
+            <th>Action</th>
         </tr>
     </thead>
     <tbody>
         {% for client in clients %}
         <tr>
-            <td>{{ client.client_name}}</td>
+            <td>{{ client.client_name }}</td>
             <td>{{ client.client_id }}</td>
             <td>{{ client.client_secret}}</td>
             <td>{{ client.scope}}</td>

@@ -5,20 +5,16 @@ from flask import (
     redirect,
     render_template,
     current_app,
-    session,
-    g,
-    abort,
-    jsonify,
 )
 from flask_login import login_user, current_user, logout_user, login_required
-from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
+from werkzeug.security import gen_salt
 from werkzeug.urls import url_parse
-from datetime import datetime
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from authlib.oauth2 import OAuth2Error
-import os
+import time
 from app import db
 from app.auth.forms import (
     register_form,
@@ -34,10 +30,9 @@ from app.main import main
 #from app.email import send_email
 from app.gmail import send_email
 from app.models import User, Role
-from app.auth.models import OAuth2Client, OAuth2AuthorizationCode,OAuth2Token
+
 from .oauth2 import authorization
-from werkzeug.security import gen_salt
-import time
+
 ###### Definig some custom decorator
 
 
@@ -47,7 +42,6 @@ def unauthenticated_required(viewFunc):
         if current_user.is_anonymous:
             return viewFunc(*args, **kwargs)
         return redirect("/")
-
     return is_unauthenticated
 
 
@@ -175,29 +169,11 @@ def register_oauth():
     """ Here a user can create a new Oauth client that he can use to access his data. """
     form = OauthClientForm()
     if form.validate_on_submit():
+        client_name = request.form["client_name"],
+        client_scope = request.form["allowed_scope"],
+        print(type(client_name))
         try:
-            client_id = gen_salt(24)
-            client_id_issued_at = int(time.time())
-
-            client = OAuth2Client(
-            client_id=client_id,
-            client_id_issued_at=client_id_issued_at,
-            user_id=current_user.id,
-        )
-            client_metadata = {
-            "client_name": request.form["client_name"],
-            "client_uri": url_for("main.conversations", _external=True),
-            "grant_types": ["authorization_code","refresh_token"],
-            "redirect_uris": [url_for("auth.get_code", _external=True)],
-            "response_types": ["code"],
-            "scope" : request.form["allowed_scope"],
-            "token_endpoint_auth_method": "client_secret_basic"
-        }
-
-            client.set_client_metadata(client_metadata)
-            client.client_secret = gen_salt(48)
-            db.session.add(client)
-            db.session.commit()
+            current_user.create_oauth2_client(client_name[0],client_scope)
         except Exception as e:
             db.session.rollback()
             raise Exception(e)
@@ -208,7 +184,7 @@ def register_oauth():
 @auth.route("/oauth/clients", methods = ["GET"])
 @login_required
 def get_oauth_clients():
-    clients = OAuth2Client.query.filter_by(user=current_user).all()
+    clients = current_user.get_oauth2_clients()
     return render_template("show_clients.html",clients=clients)
 
 
@@ -243,21 +219,14 @@ def revoke_token():
 @auth.route('/oauth/delete/<client_id>', methods=["GET"])
 @login_required
 def delete_client(client_id):
-    client = OAuth2Client.query.filter_by(client_id=client_id, user_id=current_user.id).first_or_404()
-    tokens = OAuth2Token.query.filter_by(client_id=client_id).all()
-    for token in tokens: 
-        token.revoked = True
-    db.session.delete(client)
-    db.session.commit()
+    current_user.delete_oauth2_client()
     return redirect(url_for("auth.get_oauth_clients"))
 
 @auth.route('/oauth', methods=["GET"])
 @login_required
 def get_code():
     code = request.args.get("code")
-    client = OAuth2Client.query.join(OAuth2AuthorizationCode, \
-             OAuth2Client.client_id==OAuth2AuthorizationCode.client_id) \
-             .filter(OAuth2AuthorizationCode.code == code, OAuth2Client.user == current_user).first_or_404()
+    client = get_oauth2_client_from_code(code)
     return render_template("oauth_code.html",code=code,client=client)
 
 

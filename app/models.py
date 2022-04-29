@@ -5,15 +5,63 @@ from sqlalchemy import event
 from flask import current_app, url_for
 import os
 import uuid
+from authlib.integrations.sqla_oauth2 import (
+    OAuth2ClientMixin,
+    OAuth2AuthorizationCodeMixin,
+    OAuth2TokenMixin,
+)
 from datetime import datetime
+import time
 from app import db, login_manager
 from app.sse.views import push_message_to_redis
 from werkzeug.exceptions import HTTPException
+from werkzeug.security import gen_salt
 from authlib.integrations.flask_oauth2 import current_token
-
 
 class UnauthorizedOperation(HTTPException):
     code = 403
+
+class OAuth2Client(db.Model, OAuth2ClientMixin):
+    __tablename__ = 'oauth2_client'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(
+        db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'))
+    user = db.relationship('User')
+
+    def has_user_consent(self):
+        if OAuth2Token.query.filter_by(client_id = self.client_id).first():
+            return True
+        return False
+
+
+class OAuth2AuthorizationCode(db.Model, OAuth2AuthorizationCodeMixin):
+    __tablename__ = 'oauth2_code'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(
+        db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'))
+    user = db.relationship('User')
+
+
+class OAuth2Token(db.Model, OAuth2TokenMixin):
+    __tablename__ = 'oauth2_token'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(
+        db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'))
+    user = db.relationship('User')
+
+    """    def is_refresh_token_active(self):
+        if self.revoked:
+            return False
+        expires_at = self.issued_at + self.expires_in * 2
+        return expires_at >= time.time() """
+
+    def is_refresh_token_active(self):
+        if OAuth2Client.query.filter_by(client_id = self.client_id).first():
+            return True
+        return False
 
 class ApiDict(dict):
     """Defining a custom dict with some methods to convert some objects to dictionary."""
@@ -63,8 +111,8 @@ class UserApiMixin():
        Exceptions are handled by the app error_handler."""
 
     def api_get_conversations(self,page,conversations_per_page,messages_per_page):
-        """ Return a list of all conversations, including participants and the most recents messages.
-        The number of message returned if defined by messages_per_page argument. """
+        """ Returns a dictionary containg a list of all conversations, including participants and the most recents messages.
+        The number of message returned is defined by messages_per_page argument. """
         conversations = (
             Conversation.query.filter(Conversation.users.contains(self))
             .order_by(Conversation.timestamp.desc())
@@ -235,7 +283,50 @@ class Message(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 
-class User(db.Model, UserMixin, UserApiMixin):
+class OAuth2User():
+    def create_oauth2_client(self,client_name,client_scope):
+        client_id = gen_salt(24)
+        client_id_issued_at = int(time.time())
+        client = OAuth2Client(
+        client_id=client_id,
+        client_id_issued_at=client_id_issued_at,
+        user_id=self.id,
+        )
+
+        client_metadata = {
+            "client_name": client_name,
+            "client_uri": url_for("main.conversations", _external=True),
+            "grant_types": ["authorization_code","refresh_token"],
+            "redirect_uris": [url_for("auth.get_code", _external=True)],
+            "response_types": ["code"],
+            "scope" : client_scope,
+            "token_endpoint_auth_method": "client_secret_basic"
+        }
+        client.set_client_metadata(client_metadata)
+        client.client_secret = gen_salt(48)
+        db.session.add(client)
+        db.session.commit()
+
+    def get_oauth2_clients(self):
+        clients = OAuth2Client.query.filter_by(user=self).all()
+        return clients
+
+    def delete_oauth2_client(self,client_id):
+        client = OAuth2Client.query.filter_by(client_id=client_id, user_id=current_user.id).first_or_404()
+        tokens = OAuth2Token.query.filter_by(client_id=client_id).all()
+        for token in tokens: 
+            token.revoked = True
+        db.session.delete(client)
+        db.session.commit()
+
+    def get_oauth2_client_from_code(self,code):
+        client = OAuth2Client.query.join(OAuth2AuthorizationCode, \
+             OAuth2Client.client_id==OAuth2AuthorizationCode.client_id) \
+             .filter(OAuth2AuthorizationCode.code == code, OAuth2Client.user == current_user).first_or_404()
+        return client
+
+
+class User(db.Model, UserMixin, UserApiMixin, OAuth2User):
     __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(20), unique=True)
@@ -391,3 +482,5 @@ class AnonymousUser(AnonymousUserMixin):
     # To avoid error when calling some methods as unauthenticated user.
     def is_role(self, role_name):
         return False
+
+
