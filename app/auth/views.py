@@ -171,13 +171,8 @@ def register_oauth():
     if form.validate_on_submit():
         client_name = request.form["client_name"]
         client_scope = request.form["allowed_scope"]
-        try:
-            current_user.create_oauth2_client(client_name,client_scope)
-        except Exception as e:
-            db.session.rollback()
-            raise Exception(e)
-        finally:
-            return redirect(url_for("auth.get_oauth_clients"))
+        current_user.create_oauth2_client(client_name,client_scope)
+        return redirect(url_for("auth.get_oauth_clients"))
     return render_template("form.html", form=form, form_name="Register a Client App")
 
 @auth.route("/oauth/clients", methods = ["GET"])
