@@ -284,6 +284,7 @@ class Message(db.Model):
 
 
 class OAuth2User():
+
     def create_oauth2_client(self,client_name,client_scope):
         client_id = gen_salt(24)
         client_id_issued_at = int(time.time())
@@ -311,7 +312,7 @@ class OAuth2User():
         clients = OAuth2Client.query.filter_by(user=self).all()
         return clients
 
-    def delete_oauth2_client(self,client_id)):
+    def delete_oauth2_client(self,client_id):
         client = OAuth2Client.query.filter_by(client_id=client_id, user_id=self.id).first_or_404()
         tokens = OAuth2Token.query.filter_by(client_id=client_id).all()
         for token in tokens: 
@@ -334,7 +335,7 @@ class User(db.Model, UserMixin, UserApiMixin, OAuth2User):
     email = db.Column(db.String(155))
     roles = db.relationship("Role", secondary="user_roles")
     confirmed = db.Column(db.Boolean, default=False)
-    about_me = db.Column(db.String(140))
+    about_me = db.Column(db.String(140),default="")
     messages_sent = db.relationship(
         "Message", foreign_keys="Message.sender_id", backref="sender", lazy="dynamic"
         ) # TODO: change to a better name
