@@ -4,7 +4,6 @@ let set_participant_popover_events = (all_participant_elements) => {
     let timeout = null
     all_participant_elements.forEach((participant_element) => {
       let username = participant_element.innerText.trim()
-      console.log(username)
       if (username && participant_element) {
         participant_element.addEventListener("mouseover", function() {
           timeout = setTimeout(() => {
