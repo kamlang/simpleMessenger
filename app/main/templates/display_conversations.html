@@ -61,7 +61,13 @@
           <img class="avatar_message" src="/static/avatars/{{ last_message.sender.avatar}}"
           onerror="this.src='/static/avatars/default.png'">
           <small style="float: right;" class="timestamp"> {{moment(conversation.timestamp).format('LLL')}}</small>
-          <p class="message_content">{{conversation.messages.first().content}}</p>
+          <p class="message_content">
+            {% if last_message.content[80] %}
+              {{ last_message.content[:80] + " ..." }}
+            {% else %}
+               {{ last_message.content }}
+            {% endif %}
+          </p>
           {%else%}
           <p class="message_content">No message for the moment.</p>
           {% endif %}
