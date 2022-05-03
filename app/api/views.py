@@ -12,7 +12,7 @@ from flask_wtf.csrf import validate_csrf,CSRFError,ValidationError
 class login_or_oauth_required():
     """ We want the API to be accessible from js and by oauth user.
     So here we're checking if user is authenticated via classic method,
-    if so we're checking if csrf token is valid. 
+    if so we're checking if csrf token is valid.
     If not we're checking if the oauth token is acceptable to access this ressource. """
 
     def __init__(self, scope, operator = "AND"):
@@ -37,7 +37,6 @@ class login_or_oauth_required():
         return wrapper
 
 @api.route("/help")
-@login_or_oauth_required('modify')
 def help_api():
     return render_template("help_api.html",
             api_doc = api_doc_list)
@@ -45,10 +44,10 @@ def help_api():
 @api.route("/user/getUnreadMessages", methods=["GET"])
 @login_or_oauth_required(['read','modify'],operator='OR')
 def get_unread_messages():
-    """Returns a list of all conversations containing unread messages. 
+    """Returns a list of all conversations containing unread messages.
     You can choose the number of conversations returned per page.
     Use a GET request with query string:
-         ?conversations=3 default is 10 """
+    ?conversations=3 default is 10. """
 
     page = request.args.get("page", 1, type=int)
     conversations_per_page = request.args.get("conversations", 10, type=int)
@@ -71,9 +70,9 @@ def set_about_me():
 def get_conversations():
     """Returns all conversations of a user, you can specify the number of conversations returned per page
     and also the number of messages returned per conversations.
-    Use a GET request with query string: 
-        ?messages=3 default is 1.
-        ?conversations=3 default is 10."""
+    Use a GET request with query string:
+    ?messages=3 default is 1.
+    ?conversations=3 default is 10."""
     page = request.args.get("page", 1, type=int)
     conversations_per_page = request.args.get("conversations", 10, type=int)
     messages_per_page = request.args.get("messages", 1, type=int)
@@ -85,8 +84,8 @@ def get_conversations():
 @login_or_oauth_required(['read','modify'],operator='OR')
 def get_conversation(conversation_uuid):
     """Returns messages of a specific conversation, you can specify the number of messages to return per page.
-    Use a GET request with query string: 
-        ?messages=3 default is 10."""
+    Use a GET request with query string:
+    ?messages=3 default is 10."""
     page = request.args.get("page", 1, type=int)
     messages_per_page  = request.args.get("messages", 10, type=int)
     data = current_token.user.api_get_conversation(conversation_uuid,page,messages_per_page)

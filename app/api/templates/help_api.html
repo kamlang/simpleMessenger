@@ -4,10 +4,10 @@
       <h1>How it works ?</h1>
           <br>
       <ul>
-        <li><p> First you need to get your credentials, this is done by creating a new OAuth client. You can create one by clicking on "Get Access" from the "API" menu above.</p>
-          <li><p> Once you created your client you have to give it authorization to access your data. Click "My Clients" from the "API" menu. You can then authorize your new client to get access to your data. </p>
-          <li> Once you get your code you can exchange it against a token. Authorization token have a 1 hour life time.
-            A refresh token is also provided, so you can request a fresh token without having to redo all the steps. 
+        <li><p> First you need to get your API access, this is done by creating a new OAuth client and give it authorization to access you data. You can create one by clicking on "Get Access" from the "API" menu above.</p>
+        <li><p> Here the OAuth authorization code flow is used. Basically it means once you consent to give authorization to your newly created client you will get an authorization code in return which you can finally exchange to get your API token. </p>
+        <li><p> Authorization token have a 1 hour life time. A refresh token which never expires is also provided, so you can request a fresh token without having to redo all the steps.</p>
+          <li><p> You can then try it using either cURL, or this<a href="">Python CLI</a> which really makes it easy to interact with the API of simpleMessenger.</p>
         </ul>
         <hr>
       <h2> API endpoints: </h2>

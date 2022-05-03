@@ -22,7 +22,7 @@ def build_api_doc(file_path = os.path.join(os.getcwd(),"app/api/views.py")):
         route_dict = {}
         route_dict["path"] = "/api" + route[0]
         route_dict["method"] = route[1]
-        route_dict["help"] = route[2].replace("\n","").strip()
+        route_dict["help"] = route[2].replace("\n","").replace("    ", " ").strip()
         clean_api_doc_list.append(route_dict)
     return clean_api_doc_list
 
