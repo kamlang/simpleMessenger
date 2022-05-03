@@ -7,16 +7,16 @@ from app.xhr import xhr
 from html import escape
 
 def with_csrf_validation(view_func):
-    # Added to handle request send via xhr
+    # Added to handle csrf validation for xhr request
     @wraps(view_func)
     def validating_csrf(*args, **kwargs):
         csrf_token = request.headers.get("X-CSRFToken")
         try:
             validate_csrf(csrf_token)
+            return view_func(*args, **kwargs)
         except Exception as e:
             raise e
-        return view_func(*args, **kwargs)
-
+        redirect("/")
     return validating_csrf
 
 
