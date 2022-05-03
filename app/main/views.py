@@ -99,7 +99,6 @@ def conversation(conversation_uuid):
         content = form_send.content.data
         message = Message(sender=current_user, content=content)
         current_user.add_message_to_conversation(conversation,message)
-        push_message_to_redis(conversation, message)
         return redirect(
             url_for("main.conversation", conversation_uuid=conversation_uuid)
         )
