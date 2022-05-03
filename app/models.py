@@ -176,7 +176,6 @@ class UserApiMixin():
         conversation = self.get_conversation_by_uuid(conversation_uuid)
         message = Message(sender=self, content=message_content)
         self.add_message_to_conversation(conversation,message)
-        push_message_to_redis(conversation,message)
         api_data = ApiDict()
         api_data["message"] = "Message has been successfully added to the conversation"
         return api_data
@@ -379,6 +378,7 @@ class User(db.Model, UserMixin, UserApiMixin, OAuth2User):
             # Add +1 to new message count for all users in the conversation
             conversation.increment_unread_messages()
             db.session.commit()
+            push_message_to_redis(conversation,message)
         else:
             raise UnauthorizedOperation(
                 "Only users who are participants of a conversation can add message."
