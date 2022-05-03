@@ -6,9 +6,10 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SESSION_COOKIE_SECURE = True
-    REMEMBER_COOKIE_SECURE = True
     SESSION_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_SECURE = True
     REMEMBER_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_SAMESITE = "Strict"
     UPLOAD_FOLDER = os.path.join(basedir, "app/static/avatars")
     MAIL_SUBJECT_PREFIX = "[simpleMessenger] "
     ADMINS = ["admin@simpleMessenger.com"]
