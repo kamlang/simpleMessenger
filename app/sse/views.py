@@ -21,7 +21,6 @@ def push_message_to_redis(conversation,message):
             "participants": participants,
             "unread_messages": user.get_number_of_unread_messages(conversation),
         }
-        print(redis_message)
         try:
             red.publish(user.username, str(redis_message))
         except:
