@@ -60,12 +60,12 @@ def run(method, api_endpoint, data, credentials_file, token_file, verify):
     else:
         request_keywords = {"headers":headers,"verify":verify}
 
-    res = make_request(url, **request_kwords)
+    res = make_request(url, **request_keywords)
 
     if res.status_code == 401: 
         token_data = get_fresh_token_data(token_data,credentials_data,token_file,verify)
-        request_kwords["headers"] = {"Authorization": "Bearer " + token_data["access_token"]}
-        res = make_request(url, **request_kwords)
+        request_keywords["headers"] = {"Authorization": "Bearer " + token_data["access_token"]}
+        res = make_request(url, **request_keywords)
 
     click.echo(prettify(res.json()))
 
