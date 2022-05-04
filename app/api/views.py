@@ -35,15 +35,19 @@ class login_or_oauth_required():
                     validate_csrf(csrf_token)
                 except ValidationError as error:
                     raise CSRFError
+
                 self._set_current_api_user(current_user)
                 return f(*args,**kwargs)
             try:
                 require_oauth.acquire_token(self.scope,self.operator)
             except Exception as error:
                 raise require_oauth.raise_error_response(error)
+
             self._set_current_api_user(current_token.user)
             return f(*args,**kwargs)
+
         return wrapper
+
 
 def _get_current_api_user():
     ctx = _app_ctx_stack.top
