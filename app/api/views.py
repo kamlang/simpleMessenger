@@ -95,8 +95,6 @@ def get_conversations():
     page = request.args.get("page", 1, type=int)
     conversations_per_page = request.args.get("conversations", 10, type=int)
     messages_per_page = request.args.get("messages", 1, type=int)
-    print("coucou")
-    print(current_api_user)
     data = current_api_user.api_get_conversations(page,conversations_per_page,messages_per_page)
     return jsonify(data)
 
