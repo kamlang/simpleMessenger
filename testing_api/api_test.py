@@ -12,7 +12,7 @@ from urllib3.connectionpool import InsecureRequestWarning
 warnings.filterwarnings("ignore", category=InsecureRequestWarning)
 
 HTTP_METHODS = ["GET", "POST", "DELETE", "PUT", "PATCH"]
-URL_BASE = "https://localhost:5000"
+URL_BASE = "https://localhost:5000" # To modify !!!
 OAUTH_TOKEN_ENDPOINT="/auth/oauth/token"
 
 @click.command(no_args_is_help=True)
