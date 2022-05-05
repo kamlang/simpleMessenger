@@ -11,6 +11,13 @@ table
   min-width:80%;
 }
 
+table,td, th
+{
+  border-style: solid;
+  border-color: #444444 ;
+  border-width: 1px;
+}
+
 .well-sm
 {
   color:var(--fg-black);
@@ -32,12 +39,6 @@ code
 font-size:75%;
 }
 
-table,td, th
-{
-  border-style: solid;
-  border-color: #444444 ;
-  border-width: 1px;
-}
 
 .errors 
 {

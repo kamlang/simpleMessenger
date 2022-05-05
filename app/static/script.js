@@ -12,9 +12,10 @@ let set_participant_popover_events = (all_participant_elements) => {
             let content_html = "<small> Last seen on: " + moment(user_data["items"].last_seen).format('LLL') + "</small>" 
             if(user_data["items"].about_me) {
               // Escaping about_me which is unverified user input
-              var p = document.createElement("p");
+              let p = document.createElement("p");
               p.appendChild(document.createTextNode(user_data["items"].about_me.trim()));
               about_me = p.innerHTML;
+
               content_html = content_html + "<br><i>\u0022" + about_me + "\u0022 </i>"}
 
               popup = $(participant_element).popover({
@@ -42,6 +43,7 @@ async function get_user_info(username) {
 
 let sse_conversations = (event_stream_url,delay) => { //setup sse stream and event handling
     let source = new EventSource(event_stream_url);
+
   source.onmessage = (event) => {
 
     const json = event.data.replaceAll("'",'"').trim()
@@ -53,8 +55,7 @@ let sse_conversations = (event_stream_url,delay) => { //setup sse stream and eve
       const conversation_model = document.querySelector('#conversation_model')
       updated_conversation = conversation_model.cloneNode(true)
       updated_conversation.setAttribute("id", "conversation_"+ obj.conversation_uuid)
-      updated_conversation.removeAttribute("hidden")
-      updated_conversation.querySelector('.link_to_conversation').setAttribute("href","xhr/conversation/" + obj.conversation_uuid)
+      updated_conversation.querySelector('.link_to_conversation').setAttribute("href","/conversation/" + obj.conversation_uuid)
       }
     else { 
       updated_conversation = conversation_to_update }
@@ -68,8 +69,10 @@ let sse_conversations = (event_stream_url,delay) => { //setup sse stream and eve
       message_icon.setAttribute('class','glyphicon glyphicon-envelope') 
     updated_conversation.querySelector('.unread_messages_count').append(message_icon) }
     updated_conversation.setAttribute('class', 'has-new-message')
+
     const conversations = document.querySelector('#conversations')
     const last_conversation = conversations.querySelector("[id^='conversation_']")
+
     if (last_conversation === null) {
       conversations.appendChild(updated_conversation)}
     else {
