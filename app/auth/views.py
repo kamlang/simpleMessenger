@@ -8,7 +8,6 @@ from flask import (
 )
 from flask_login import login_user, current_user, logout_user, login_required
 from functools import wraps
-from werkzeug.security import gen_salt
 from werkzeug.urls import url_parse
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -30,7 +29,6 @@ from app.main import main
 #from app.email import send_email
 from app.gmail import send_email
 from app.models import User, Role
-
 from .oauth2 import authorization
 
 ###### Definig some custom decorator
