@@ -216,7 +216,7 @@ def delete_client(client_id):
     current_user.delete_oauth2_client(client_id)
     return redirect(url_for("auth.get_oauth_clients"))
 
-@auth.route('/oauth', methods=["GET"])
+@auth.route('/oauth/callback', methods=["GET"])
 @login_required
 def get_code():
     code = request.args.get("code")

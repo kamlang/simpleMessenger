@@ -99,6 +99,21 @@ def get_conversations():
     return jsonify(data)
 
 
+@api.route("/user/getUserInfo/<username>", methods=["GET"])
+@login_or_oauth_required(['read','modify'],operator='OR')
+def get_user_info(username):
+    """ Returns information about a user. """
+    data = current_api_user.api_get_user_info(username)
+    return jsonify(data)
+
+@api.route("/conversation/<uuid:conversation_uuid>/markAsRead", methods=["PATCH"])
+@login_or_oauth_required(['modify'],operator='OR')
+def mark_as_read(conversation_uuid):
+    """ Marks a conversation as read. """
+    data = current_api_user.api_mark_as_read(conversation_uuid)
+    return jsonify(data)
+
+
 @api.route("/conversation/<uuid:conversation_uuid>/getConversation", methods=["GET"])
 @login_or_oauth_required(['read','modify'],operator='OR')
 def get_conversation(conversation_uuid):
@@ -143,7 +158,7 @@ def add_users_conversation(conversation_uuid):
     abort(400)
 
 
-@api.route("/conversation/<uuid:conversation_uuid>/leave", methods=["PUT"])
+@api.route("/conversation/<uuid:conversation_uuid>/leave", methods=["PATCH"])
 @login_or_oauth_required('modify')
 def leave_conversation(conversation_uuid):
     """Simply leave a conversation."""

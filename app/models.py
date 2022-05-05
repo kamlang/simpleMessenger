@@ -129,6 +129,23 @@ class UserApiMixin():
             api_data["number_of_pages"] = conversations.pages
         return api_data
 
+    def api_get_user_info(self,username):
+        user = User.query.filter_by(username=username).first()
+        api_data = ApiDict()
+        api_data["items"] =  {
+            "last_seen": user.last_seen,
+            "about_me": user.about_me,
+            "avatar": user.avatar,
+        }
+        print(api_data)
+        return api_data
+
+    def api_mark_as_read(self,conversation_uuid):
+        conversation = self.get_conversation_by_uuid(conversation_uuid)
+        conversation.reset_unread_messages(self)
+        api_data = ApiDict()
+        api_data["message"] = "Conversation has been marked as read."
+        return api_data
 
     def api_get_unread_messages(self,page,conversations_per_page):
         """ Returns a list of conversations which contains unread messages. Each message is
@@ -322,7 +339,8 @@ class OAuth2User():
     def get_oauth2_client_from_code(self,code):
         client = OAuth2Client.query.join(OAuth2AuthorizationCode, \
              OAuth2Client.client_id==OAuth2AuthorizationCode.client_id) \
-             .filter(OAuth2AuthorizationCode.code == code, OAuth2Client.user == current_user).first_or_404()
+             .filter(OAuth2AuthorizationCode.code == code).first()
+#             .filter(OAuth2AuthorizationCode.code == code, OAuth2Client.user == current_user).first_or_404()
         return client
 
 
@@ -393,7 +411,7 @@ class User(db.Model, UserMixin, UserApiMixin, OAuth2User):
     
     def delete_conversation(self,conversation):
         if conversation.admin == self:
-            db.session.delete(self)
+            db.session.delete(conversation)
             db.session.commit()
         else:
             raise UnauthorizedOperation("Only the admin of a conversation can delete it.")
