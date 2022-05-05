@@ -14,7 +14,7 @@
       <code>$ curl -H "Authorization: Bearer ${your_access_token}" {{url_for("api.get_help",_external=True)}} </code>
     <br>
     <br>
-    <li><p> Now you can access the API from your app. Also note that a refesh token is included.
+    <li><p> Now you can access the API. Also note that a refesh token is included.
     So when your token expired you can request a new one issuing:</p> 
       <code> $ curl -u {{client.client_id}}:{{client.client_secret}} \<br> 
       -XPOST {{url_for("auth.issue_token",_external=True)}} -F grant_type=refresh_token \ <br>
