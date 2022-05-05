@@ -6,13 +6,21 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SESSION_COOKIE_SECURE = True
-    REMEMBER_COOKIE_SECURE = True
     SESSION_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_SECURE = True
     REMEMBER_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_SAMESITE = "Strict"
     UPLOAD_FOLDER = os.path.join(basedir, "app/static/avatars")
     MAIL_SUBJECT_PREFIX = "[simpleMessenger] "
     ADMINS = ["admin@simpleMessenger.com"]
+#    SERVER_NAME="test"
     POSTS_PER_PAGE = 7
+    OAUTH2_REFRESH_TOKEN_GENERATOR = True
+    OAUTH2_TOKEN_EXPIRES_IN = {
+                'authorization_code': 3600,
+                'client_credentials':3600,
+                'urn:ietf:params:oauth:grant-type:jwt-bearer': 3600,
+    }
     @staticmethod
     def init_app(app):
         pass

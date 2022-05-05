@@ -4,15 +4,19 @@ let set_participant_popover_events = (all_participant_elements) => {
     let timeout = null
     all_participant_elements.forEach((participant_element) => {
       let username = participant_element.innerText.trim()
-      console.log(username)
       if (username && participant_element) {
         participant_element.addEventListener("mouseover", function() {
           timeout = setTimeout(() => {
             timeout = null
             get_user_info(username).then((user_data) => {
-            let content_html = "<small> Last seen on: " + moment(user_data.last_seen).format('LLL') + "</small>" 
-            if(user_data.about_me) {
-              content_html = content_html + "<br><i>\u0022" + user_data.about_me.trim() + "\u0022 </i>"}
+            let content_html = "<small> Last seen on: " + moment(user_data["items"].last_seen).format('LLL') + "</small>" 
+            if(user_data["items"].about_me) {
+              // Escaping about_me which is unverified user input
+              let p = document.createElement("p");
+              p.appendChild(document.createTextNode(user_data["items"].about_me.trim()));
+              about_me = p.innerHTML;
+
+              content_html = content_html + "<br><i>\u0022" + about_me + "\u0022 </i>"}
 
               popup = $(participant_element).popover({
               html: true,
@@ -31,15 +35,15 @@ let set_participant_popover_events = (all_participant_elements) => {
 }
 
 async function get_user_info(username) {
-  let response = await fetch( window.location.origin + '/xhr/getUserInfo/' + username,
+  let response = await fetch( window.location.origin + '/api/user/getUserInfo/' + username,
 		{ headers:{'X-CSRFToken': csrf_token }})
 		let json = await response.json()
 		return json
 }
 
-let sse_conversations = (event_stream_url,delay = 1000) => { //setup sse stream and event handling
+let sse_conversations = (event_stream_url,delay) => { //setup sse stream and event handling
     let source = new EventSource(event_stream_url);
-    
+
   source.onmessage = (event) => {
 
     const json = event.data.replaceAll("'",'"').trim()
@@ -51,8 +55,7 @@ let sse_conversations = (event_stream_url,delay = 1000) => { //setup sse stream 
       const conversation_model = document.querySelector('#conversation_model')
       updated_conversation = conversation_model.cloneNode(true)
       updated_conversation.setAttribute("id", "conversation_"+ obj.conversation_uuid)
-      updated_conversation.removeAttribute("hidden")
-      updated_conversation.querySelector('.link_to_conversation').setAttribute("href","xhr/conversation/" + obj.conversation_uuid)
+      updated_conversation.querySelector('.link_to_conversation').setAttribute("href","/conversation/" + obj.conversation_uuid)
       }
     else { 
       updated_conversation = conversation_to_update }
@@ -66,8 +69,10 @@ let sse_conversations = (event_stream_url,delay = 1000) => { //setup sse stream 
       message_icon.setAttribute('class','glyphicon glyphicon-envelope') 
     updated_conversation.querySelector('.unread_messages_count').append(message_icon) }
     updated_conversation.setAttribute('class', 'has-new-message')
+
     const conversations = document.querySelector('#conversations')
     const last_conversation = conversations.querySelector("[id^='conversation_']")
+
     if (last_conversation === null) {
       conversations.appendChild(updated_conversation)}
     else {
@@ -77,10 +82,10 @@ let sse_conversations = (event_stream_url,delay = 1000) => { //setup sse stream 
       source.close()
       setTimeout(() => sse_conversations(event_stream_url,delay*2),delay)
   }
-    source.onopen = event => delay = 1000 // reset delay after successfull connection
+    source.onopen = (event) => delay = 1000
 }
 
-let sse_conversation = (conversation_uuid,event_stream_url,delay = 1000) => {
+let sse_conversation = (conversation_uuid,event_stream_url,delay) => {
     let source = new EventSource(event_stream_url);
     let new_messages_count = 0
     source.onmessage = (event) => {
@@ -97,7 +102,7 @@ let sse_conversation = (conversation_uuid,event_stream_url,delay = 1000) => {
             parent_element.insertBefore(new_message, last_message);
               // make a get request to reset unread messages counter
               let xhr= new XMLHttpRequest();
-              xhr.open("GET", "../xhr/conversation/" + obj.conversation_uuid + "/mark_as_read");
+              xhr.open("PATCH", "../api/conversation/" + obj.conversation_uuid + "/markAsRead");
               xhr.setRequestHeader("X-CSRFToken", csrf_token)
               xhr.send()
         }
@@ -110,10 +115,11 @@ let sse_conversation = (conversation_uuid,event_stream_url,delay = 1000) => {
       source.close()
       setTimeout(() => sse_conversation(conversation_uuid,event_stream_url,delay*2),delay)
   }
-    source.onopen = event => delay = 1000 // reset delay after successfull connection
+    source.onopen = (event) => delay = 1000
+    
  }
 
-let trigger_action = (conversation_uuid,action) => {
+let trigger_action = (conversation_uuid, action) => {
 
   let conversation_element = document.querySelector("#conversation_"+conversation_uuid)
   let conversation_link = conversation_element.querySelector(".link_to_conversation")
@@ -135,7 +141,8 @@ let trigger_action = (conversation_uuid,action) => {
   
   yes_a.addEventListener("click", () => {
     let xhr= new XMLHttpRequest();
-    xhr.open("GET", "xhr/conversation/" + conversation_uuid + "/" + action);
+    http_method = {"delete": "DELETE","leave":"PATCH"}
+    xhr.open(http_method[action], "api/conversation/" + conversation_uuid + "/" + action);
     xhr.setRequestHeader("X-CSRFToken", csrf_token)
     xhr.send()
     document.querySelector("#conversation_"+conversation_uuid).remove()
@@ -143,7 +150,7 @@ let trigger_action = (conversation_uuid,action) => {
 
   no_a.addEventListener("click", () => { setTimeout( () => {
     message_container.remove()
-    conversation_link.setAttribute("href","xhr/conversation/"+conversation_uuid)
+    conversation_link.setAttribute("href","/conversation/"+conversation_uuid)
     conversation_link.appendChild(saved_message_content)},100)
   })
 }

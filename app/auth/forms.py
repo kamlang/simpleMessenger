@@ -4,8 +4,10 @@ from wtforms import (
     PasswordField,
     BooleanField,
     SubmitField,
+    SelectField,
     FileField,
     TextAreaField,
+    BooleanField,
 )
 from wtforms.validators import (
     ValidationError,
@@ -91,3 +93,15 @@ class confirm_username(FlaskForm):
         ],
     )
     submit = SubmitField("Submit")
+
+class OauthClientForm(FlaskForm):
+    client_name = StringField("Client Name",validators=[
+        InputRequired(message="This field can not be empty."), 
+        Length(4, 24, message="Client name length must be between 4 and 24 charcters"),])
+    allowed_scope = SelectField("Scope",choices=[("read", "Read Only"),("modify", "Read and Write")])
+    submit = SubmitField("Submit")
+
+class OAuthConfirm(FlaskForm):
+    confirm = BooleanField()
+    submit = SubmitField("Submit")
+

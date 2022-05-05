@@ -5,29 +5,31 @@ from flask import (
     redirect,
     render_template,
     current_app,
-    session,
-    g,
-    abort,
 )
 from flask_login import login_user, current_user, logout_user, login_required
-from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from werkzeug.urls import url_parse
-from datetime import datetime
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
-import os
-from app.models import User, Role
+from authlib.oauth2 import OAuth2Error
+import time
+from app import db
 from app.auth.forms import (
     register_form,
     login_form,
     password_reset_confirmation,
     confirm_username,
+    OauthClientForm,
+    OAuthConfirm,
 )
+from app import csrf
 from app.auth import auth
-from app import db
+from app.main import main
 #from app.email import send_email
 from app.gmail import send_email
+from app.models import User, Role
+from .oauth2 import authorization
 
 ###### Definig some custom decorator
 
@@ -38,7 +40,6 @@ def unauthenticated_required(viewFunc):
         if current_user.is_anonymous:
             return viewFunc(*args, **kwargs)
         return redirect("/")
-
     return is_unauthenticated
 
 
@@ -47,7 +48,7 @@ def unauthenticated_required(viewFunc):
 
 @auth.route("/login", methods=["GET", "POST"])
 @unauthenticated_required
-def login():  ### Restrict to unauthenticate user
+def login():  # Restrict to unauthenticate user
     form = login_form()
     if form.validate_on_submit():
         username = request.form["username"]
@@ -158,6 +159,68 @@ def send_link(choice):
 def failed():
     return render_template("failed.html")
 
+### OAuth stuff
+
+@auth.route("/oauth/register", methods = ["GET","POST"])
+@login_required
+def register_oauth():
+    """ Here a user can create a new Oauth client that he can use to access his data. """
+    form = OauthClientForm()
+    if form.validate_on_submit():
+        client_name = request.form["client_name"]
+        client_scope = request.form["allowed_scope"]
+        current_user.create_oauth2_client(client_name,client_scope)
+        return redirect(url_for("auth.get_oauth_clients"))
+    return render_template("form.html", form=form, form_name="Register a Client App")
+
+@auth.route("/oauth/clients", methods = ["GET"])
+@login_required
+def get_oauth_clients():
+    clients = current_user.get_oauth2_clients()
+    return render_template("show_clients.html",clients=clients)
+
+
+@auth.route("/oauth/authorize", methods = ["GET", "POST"])
+@login_required
+def oauth_authorize():
+    user = current_user._get_current_object()
+    form = OAuthConfirm()
+    if request.method == 'GET':
+        try:
+            grant = authorization.validate_consent_request(end_user=user)
+        except OAuth2Error as error:
+            return error.error
+        return render_template('authorize.html', form=form, user=user, grant=grant)
+    if form.validate_on_submit():
+        grant_user = user
+    else:
+        grant_user = None
+    return authorization.create_authorization_response(grant_user=grant_user)
+
+@auth.route('/oauth/token', methods=['POST'])
+@csrf.exempt
+def issue_token():
+    return authorization.create_token_response()
+
+
+@auth.route('/oauth/revoke', methods=['POST'])
+@csrf.exempt
+def revoke_token():
+    return authorization.create_endpoint_response('revocation')
+
+@auth.route('/oauth/delete/<client_id>', methods=["GET"])
+@login_required
+def delete_client(client_id):
+    current_user.delete_oauth2_client(client_id)
+    return redirect(url_for("auth.get_oauth_clients"))
+
+@auth.route('/oauth/callback', methods=["GET"])
+@login_required
+def get_code():
+    code = request.args.get("code")
+    client = current_user.get_oauth2_client_from_code(code)
+    return render_template("oauth_code.html",code=code,client=client)
+
 
 def get_username_from_token(token):
     s = Serializer(current_app.config["SECRET_KEY"])
@@ -168,13 +231,14 @@ def get_username_from_token(token):
     return data.get("username")
 
 
-def generate_confirmation_token(username, expiration=3600):
+def generate_confirmation_token(username, expiration=300):
     s = Serializer(current_app.config["SECRET_KEY"], expiration)
     return s.dumps({"username": username})
 
 
 email_argument = {
     "confirmation": {"subject": "Confirm your Account", "template": "/email/confirm"},
+    "oauth_confirmation": {"subject": "Allow access", "template": "/email/confirm_oauth"},
     "password_reset": {"subject": "Password reset", "template": "/email/reset"},
 }
 

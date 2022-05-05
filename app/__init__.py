@@ -3,7 +3,6 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
-from flask_httpauth import HTTPBasicAuth
 from flask_moment import Moment
 from flask_uuid import FlaskUUID
 from config import config
@@ -23,7 +22,6 @@ bootstrap = Bootstrap()
 red = redis.StrictRedis()
 csrf = CSRFProtect()
 flask_uuid = FlaskUUID()
-basic_auth =  HTTPBasicAuth()
 
 def create_app(config_name):
     app = Flask(__name__)
@@ -42,14 +40,12 @@ def create_app(config_name):
     from app.auth import auth as auth_blueprint
     from app.api import api as api_blueprint
     from app.sse import sse as sse_blueprint
-    from app.xhr import xhr as xhr_blueprint
     from app.restricted import restricted as restricted_blueprint
     app.register_blueprint(main_blueprint)
     app.register_blueprint(api_blueprint, url_prefix="/api")
     app.register_blueprint(auth_blueprint, url_prefix="/auth")
     app.register_blueprint(restricted_blueprint, url_prefix="/admin")
     app.register_blueprint(sse_blueprint, url_prefix="/stream")
-    app.register_blueprint(xhr_blueprint, url_prefix="/xhr")
     csrf.exempt(api_blueprint)
 
     if app.config["MAIL_SERVER"]:
@@ -80,10 +76,13 @@ def create_app(config_name):
                 "%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]"
             )
         )
-        file_handler.setLevel(logging.DEBUG)
+        file_handler.setLevel(logging.INFO)
 
         app.logger.addHandler(file_handler)
-        app.logger.setLevel(logging.DEBUG)
+        app.logger.setLevel(logging.INFO)
         app.logger.info("simpleMessenger startup")
+
+        from app.auth.oauth2 import config_oauth
+        config_oauth(app)
 
     return app

@@ -1,0 +1,16 @@
+{% extends "parent.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+
+<p>The application <strong>{{grant.client.client_name}}</strong> is requesting:
+<strong>{{ grant.request.scope }}</strong>
+</p>
+<p> Do you consent ? </p>
+<div class="row">
+  <div class="col-md-4">
+    {{ wtf.quick_form(form) }}
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,7 @@
+Hello {{ username }}!
+
+Please validate your app using the link below:
+
+{{ url_for('auth.oauth_authorize',confirmation_token=token, _external=True) }}
+
+Glgmsh
