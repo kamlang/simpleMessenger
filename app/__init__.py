@@ -47,6 +47,8 @@ def create_app(config_name):
     app.register_blueprint(restricted_blueprint, url_prefix="/admin")
     app.register_blueprint(sse_blueprint, url_prefix="/stream")
     csrf.exempt(api_blueprint)
+    from app.auth.oauth2 import config_oauth
+    config_oauth(app)
 
     if app.config["MAIL_SERVER"]:
         auth = None
@@ -82,7 +84,5 @@ def create_app(config_name):
         app.logger.setLevel(logging.INFO)
         app.logger.info("simpleMessenger startup")
 
-        from app.auth.oauth2 import config_oauth
-        config_oauth(app)
 
     return app
