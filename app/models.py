@@ -137,7 +137,6 @@ class UserApiMixin():
             "about_me": user.about_me,
             "avatar": user.avatar,
         }
-        print(api_data)
         return api_data
 
     def api_mark_as_read(self,conversation_uuid):
