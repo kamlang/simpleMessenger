@@ -80,5 +80,5 @@ def create_email_message(sender, to, subject, message_text):
     b64_bytes = base64.urlsafe_b64encode(message.as_bytes())
     return {'raw': b64_bytes.decode()}
 
-if __name__ = '__main__':
+if __name__ == '__main__':
     get_api_service()
