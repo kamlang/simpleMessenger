@@ -14,12 +14,10 @@
 
           </div>
 
+          {% if conversations.total > 0%}
   <div class="well well-sm" id="conversations">
     {% set user_has_any_conversation = (conversations.total != 0)%}
-     {% if conversations.total == 0%}
-    <p> You don't have any conversation yet you can create one using the
     <span class="glyphicon glyphicon-plus"></span> button above. </p>
-    {%endif%}
     {%for conversation in conversations.items%}
       {% set unread_messages_count = current_user.get_number_of_unread_messages(conversation)%}
       {% set last_message = conversation.messages.first() %}
@@ -79,6 +77,7 @@
     {%if next_url %}<a href="{{next_url}}">Next</a>{%endif%}
   </div>
 
+    {%endif%}
   <template>
       <div class="well well-sm" id="conversation_model">
       <span class="participants"><span class="glyphicon glyphicon-user"></span>
