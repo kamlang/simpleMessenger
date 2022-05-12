@@ -184,6 +184,7 @@ def get_oauth_clients():
 @login_required
 def oauth_authorize():
     user = current_user._get_current_object()
+    print(request.headers)
     form = OAuthConfirm()
     if request.method == 'GET':
         try:
