@@ -17,7 +17,6 @@
           {% if conversations.total > 0%}
   <div class="well well-sm" id="conversations">
     {% set user_has_any_conversation = (conversations.total != 0)%}
-    <span class="glyphicon glyphicon-plus"></span> button above. </p>
     {%for conversation in conversations.items%}
       {% set unread_messages_count = current_user.get_number_of_unread_messages(conversation)%}
       {% set last_message = conversation.messages.first() %}
